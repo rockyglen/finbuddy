@@ -11,32 +11,6 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100 flex flex-col">
       {/* Navbar */}
-      <header className="w-full border-b bg-white sticky top-0 z-50">
-        <div className="mx-auto w-full max-w-screen-xl px-6 py-4 flex items-center justify-between">
-          {/* Logo centered */}
-          <h1 className="text-xl font-bold text-indigo-600 dark:text-indigo-400 mx-auto">
-            FinBuddy
-          </h1>
-
-          {/* Auth buttons (visually aligned to right) */}
-          <div className="absolute right-6 flex items-center space-x-4 min-w-[200px]">
-            <DarkModeToggle />
-            <SignedOut>
-              <Link href="/sign-in">
-                <Button variant="ghost">Sign In</Button>
-              </Link>
-              <Link href="/sign-up">
-                <Button>Get Started</Button>
-              </Link>
-            </SignedOut>
-            <SignedIn>
-              <Link href="/dashboard">
-                <Button>Go to Dashboard</Button>
-              </Link>
-            </SignedIn>
-          </div>
-        </div>
-      </header>
 
       {/* Hero Section */}
       <section className="relative flex-1 flex flex-col items-center justify-center text-center px-6 py-20 bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-950 dark:to-black dark:bg-gray-950 overflow-hidden">
@@ -177,7 +151,7 @@ export default function HomePage() {
           />
         </motion.div>
       </section>
-      <section className="bg-indigo-600 text-white text-center px-6 py-16">
+      <section className="bg-indigo-600 text-black dark:text-white dark:bg-gray-950 text-center px-6 py-16">
         <h4 className="text-3xl font-bold mb-4">
           Start taking control of your finances
         </h4>
