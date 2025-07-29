@@ -1,6 +1,6 @@
 "use client";
 
-import { SignedIn, SignedOut, UserButton, useUser } from "@clerk/nextjs";
+import { SignedIn, SignedOut, useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -20,9 +20,8 @@ export default function Dashboard() {
   }, [isLoaded, isSignedIn, router]);
 
   useEffect(() => {
-    // Simulate fetching transactions (replace with real API later)
-    const fakeData = [];
-    setTransactions(fakeData);
+    const existing = JSON.parse(localStorage.getItem("expenses") || "[]");
+    setTransactions(existing);
   }, []);
 
   if (!isSignedIn) return null;
@@ -30,11 +29,20 @@ export default function Dashboard() {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 p-6">
       {/* Top Bar */}
-      <div className="flex items-center justify-between mb-8">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
         <h1 className="text-2xl font-bold">
-          Welcome back, {user?.firstName} 👋
+          Welcome back, {user?.firstName || "FinBuddy"} 👋
         </h1>
-        <div className="flex items-center space-x-4"></div>
+        <SignedIn>
+          <Link href="/add-expense">
+            <Button
+              size="sm"
+              className="bg-indigo-600 text-white hover:bg-indigo-700"
+            >
+              + Add Expense
+            </Button>
+          </Link>
+        </SignedIn>
       </div>
 
       {/* Dashboard Grid */}
@@ -42,16 +50,24 @@ export default function Dashboard() {
         <DashboardCard
           icon={<ArrowUpRight className="text-emerald-500 w-5 h-5" />}
           title="This Month's Spending"
-          value={transactions.length ? "$1,280" : "$0"}
+          value={
+            transactions.length
+              ? `$${transactions
+                  .reduce((sum, tx) => sum + Number(tx.amount || 0), 0)
+                  .toFixed(2)}`
+              : "$0.00"
+          }
         />
 
         <DashboardCard
           icon={<Upload className="text-blue-500 w-5 h-5" />}
           title="Upload Receipt"
           action={
-            <Button variant="outline" size="sm" className="mt-2">
-              Upload <Upload className="w-4 h-4 ml-2" />
-            </Button>
+            <Link href="/add-expense">
+              <Button variant="outline" size="sm" className="mt-2">
+                Upload <Upload className="w-4 h-4 ml-2" />
+              </Button>
+            </Link>
           }
         />
 
@@ -80,6 +96,7 @@ export default function Dashboard() {
       {/* Recent Transactions */}
       <div className="mt-10">
         <h2 className="text-xl font-semibold mb-4">Recent Transactions</h2>
+
         {transactions.length === 0 ? (
           <div className="text-gray-500 dark:text-gray-400 text-center py-12">
             <p>No transactions yet.</p>
@@ -95,17 +112,29 @@ export default function Dashboard() {
                 initial={{ opacity: 0, y: 10 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: i * 0.1 }}
-                className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow flex items-center justify-between"
+                className="bg-white dark:bg-gray-800 p-4 rounded-lg shadow flex justify-between items-center"
               >
                 <div>
-                  <p className="font-medium">{tx.label}</p>
+                  <p className="font-medium">{tx.category || "Unknown"}</p>
                   <p className="text-sm text-gray-500 dark:text-gray-400">
                     {tx.date}
                   </p>
+                  {tx.description && (
+                    <p className="text-sm italic text-gray-600 dark:text-gray-400 mt-1">
+                      {tx.description}
+                    </p>
+                  )}
                 </div>
-                <span className="font-semibold text-gray-900 dark:text-gray-100">
-                  {tx.amount}
-                </span>
+                <div className="text-right">
+                  <p className="text-lg font-semibold">
+                    ${Number(tx.amount || 0).toFixed(2)}
+                  </p>
+                  {tx.receiptName && (
+                    <p className="text-xs text-gray-400 mt-1">
+                      📎 {tx.receiptName}
+                    </p>
+                  )}
+                </div>
               </motion.div>
             ))}
           </div>

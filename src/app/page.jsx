@@ -72,22 +72,35 @@ export default function HomePage() {
             </Link>
           </SignedOut>
           <SignedIn>
-            <Link href="/dashboard">
-              <Button size="lg">Go to Dashboard</Button>
-            </Link>
+            <div className="space-x-4">
+              <Link href="/dashboard">
+                <Button size="lg">Go to Dashboard</Button>
+              </Link>
+              <Link href="/add-expense">
+                <Button size="lg" variant="outline">
+                  Add Expense
+                </Button>
+              </Link>
+            </div>
           </SignedIn>
         </motion.div>
       </section>
 
       {/* Features Section */}
       <section className="px-6 py-16 bg-gray-50 dark:bg-gray-950">
-        <div className="max-w-4xl mx-auto text-center mb-12">
-          <h3 className="text-3xl font-semibold">Why FinBuddy?</h3>
-          <p className="text-gray-600 dark:text-gray-300 mt-2">
-            We combine simplicity, AI, and automation to make your finances
-            effortless.
-          </p>
-          {/* <h3 className="text-3xl font-semibold mb-4 text-gray-900 dark:text-white">
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="space-x-4"
+        >
+          <div className="max-w-4xl mx-auto text-center mb-12">
+            <h3 className="text-3xl font-semibold">Why FinBuddy?</h3>
+            <p className="text-gray-600 dark:text-gray-300 mt-2">
+              We combine simplicity, AI, and automation to make your finances
+              effortless.
+            </p>
+            {/* <h3 className="text-3xl font-semibold mb-4 text-gray-900 dark:text-white">
             See it in Action
           </h3>
           <p className="text-gray-600 mb-6">
@@ -98,7 +111,8 @@ export default function HomePage() {
             alt="FinBuddy Dashboard Preview"
             className="rounded-lg shadow-xl mx-auto max-w-full"
           /> */}
-        </div>
+          </div>
+        </motion.div>
 
         <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
           <Feature

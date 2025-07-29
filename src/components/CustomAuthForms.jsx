@@ -1,4 +1,3 @@
-// ✅ Ultimate Auth UI for FinBuddy — Fully Custom Split Layout with Animation, Branding, and OAuth
 "use client";
 
 import { useSignIn, useSignUp, useClerk } from "@clerk/nextjs";
@@ -8,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { FaGoogle, FaGithub, FaSignOutAlt } from "react-icons/fa";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import { SignedIn } from "@clerk/nextjs";
 
 const inputStyle =
   "w-full px-4 py-2 mt-1 border border-gray-300 dark:border-gray-700 rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-indigo-500";
@@ -21,7 +21,7 @@ const AuthLayout = ({ children }) => (
   <div className="min-h-screen grid md:grid-cols-2 bg-white dark:bg-black">
     {/* Left: Branding and Visual */}
     <div className="hidden md:flex flex-col items-center justify-center bg-gradient-to-br from-indigo-600 to-purple-600 text-white p-10 space-y-6">
-      <Image src="/.logo.png" alt="FinBuddy Logo" width={48} height={48} />
+      <Image src="/logo.svg" alt="FinBuddy Logo" width={48} height={48} />
       <h1 className="text-4xl font-bold">FinBuddy</h1>
       <p className="text-lg max-w-sm text-center">
         Your intelligent financial sidekick. Track expenses, scan receipts, and
@@ -39,7 +39,10 @@ const AuthLayout = ({ children }) => (
     {/* Right: Form Section */}
     <div className="flex flex-col items-center justify-center px-6 py-12 bg-gray-50 dark:bg-gray-950 space-y-6">
       {children}
-      <SignOutButton />
+
+      <SignedIn>
+        <SignOutButton />
+      </SignedIn>
     </div>
   </div>
 );
@@ -52,6 +55,44 @@ function SignOutButton() {
     await signOut();
     router.push("/");
   };
+
+  return (
+    <Button
+      onClick={handleSignOut}
+      variant="ghost"
+      className="flex items-center gap-2 text-sm"
+    >
+      <FaSignOutAlt /> Sign Out
+    </Button>
+  );
+}
+
+function AuthFooterLink({ type }) {
+  return (
+    <p className="text-sm text-gray-600 dark:text-gray-400 text-center mt-4">
+      {type === "signin" ? (
+        <>
+          Don’t have an account?{" "}
+          <a
+            href="/sign-up"
+            className="text-indigo-600 dark:text-indigo-400 font-medium hover:underline"
+          >
+            Sign Up
+          </a>
+        </>
+      ) : (
+        <>
+          Already have an account?{" "}
+          <a
+            href="/sign-in"
+            className="text-indigo-600 dark:text-indigo-400 font-medium hover:underline"
+          >
+            Sign In
+          </a>
+        </>
+      )}
+    </p>
+  );
 }
 
 // ---------------- SIGN IN ----------------
@@ -150,6 +191,7 @@ export function CustomSignIn() {
           </Button>
         </form>
       </motion.div>
+      <AuthFooterLink type="signin" />
     </AuthLayout>
   );
 }
@@ -267,6 +309,7 @@ export function CustomSignUp() {
           </Button>
         </form>
       </motion.div>
+      <AuthFooterLink type="signup" />
     </AuthLayout>
   );
 }
