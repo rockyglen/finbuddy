@@ -3,6 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
+import useSWR from "swr";
+import { getExpenses, getSmartSummary } from "@/lib/fetchers";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowUpRight, Upload, Sparkles, Trash, Pencil } from "lucide-react";
@@ -16,9 +18,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-
 import ReactMarkdown from "react-markdown";
-
 import LoaderSpinner from "@/components/ui/LoaderSpinner";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
@@ -26,139 +26,113 @@ ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 export default function Dashboard() {
   const router = useRouter();
   const [user, setUser] = useState(null);
-  const [transactions, setTransactions] = useState([]);
+  const [loadingUser, setLoadingUser] = useState(true);
+
   const [filtered, setFiltered] = useState([]);
   const [categoryFilter, setCategoryFilter] = useState("");
   const [dateFilter, setDateFilter] = useState("");
   const [search, setSearch] = useState("");
+  const [loadingSummaryManually, setLoadingSummaryManually] = useState(false);
   const [smartSummary, setSmartSummary] = useState(null);
-  const [loadingSummary, setLoadingSummary] = useState(false);
-  const [loadingDashboard, setLoadingDashboard] = useState(true);
 
+  // Initialize user
   useEffect(() => {
-    const getUserAndData = async () => {
-      try {
-        setLoadingDashboard(true);
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-
-        if (!session?.user) {
-          router.push("/sign-in");
-          return;
-        }
-
-        const user = session.user;
-        setUser(user);
-
-        await fetchExpenses(user.id);
-        await fetchSavedSummary(user.id);
-      } catch (err) {
-        console.error("Dashboard fetch error:", err);
-      } finally {
-        setLoadingDashboard(false);
+    const loadUser = async () => {
+      const { data, error } = await supabase.auth.getSession();
+      if (error || !data?.session?.user) {
+        router.push("/sign-in");
+      } else {
+        setUser(data.session.user);
       }
+      setLoadingUser(false);
     };
-
-    getUserAndData();
+    loadUser();
   }, [router]);
 
-  const fetchExpenses = async (uid) => {
-    const { data, error } = await supabase
-      .from("expenses")
-      .select("*")
-      .eq("user_id", uid)
-      .order("date", { ascending: false });
+  const shouldFetch = !!user?.id;
 
-    if (!error) {
-      setTransactions(data);
-      setFiltered(data);
+  const {
+    data: transactionsData,
+    isLoading: loadingTransactions,
+    error: txError,
+  } = useSWR(shouldFetch ? ["expenses", user.id] : null, () =>
+    getExpenses(user.id)
+  );
+
+  const {
+    data: summaryData,
+    isLoading: loadingSummaryFromSWR,
+    error: sumError,
+  } = useSWR(shouldFetch ? ["summary", user.id] : null, () =>
+    getSmartSummary(user.id)
+  );
+
+  useEffect(() => {
+    if (summaryData) {
+      setSmartSummary(summaryData);
     }
-  };
+  }, [summaryData]);
 
-  const fetchSavedSummary = async (uid) => {
-    const { data, error } = await supabase
-      .from("ai_summary")
-      .select("summary_text, created_at")
-      .eq("user_id", uid)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single();
-
-    if (!error && data?.summary_text) {
-      setSmartSummary(data.summary_text);
-    }
-  };
+  useEffect(() => {
+    const txs = transactionsData ?? [];
+    const filteredArray = txs
+      .filter((tx) => {
+        const matchCategory = categoryFilter
+          ? tx.category === categoryFilter
+          : true;
+        const matchDate = dateFilter ? tx.date === dateFilter : true;
+        const matchSearch = search
+          ? tx.description?.toLowerCase().includes(search.toLowerCase()) ||
+            tx.category?.toLowerCase().includes(search.toLowerCase())
+          : true;
+        return matchCategory && matchDate && matchSearch;
+      })
+      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at)); // 🆕 Sort by created_at DESC
+    setFiltered(filteredArray);
+  }, [transactionsData, categoryFilter, dateFilter, search]);
 
   const fetchSmartSummary = async () => {
+    setLoadingSummaryManually(true);
     try {
-      setLoadingSummary(true);
-
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
-
+      const { data: sessionData } = await supabase.auth.getSession();
       const res = await fetch("/api/summary-insights", {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${session.access_token}`,
+          Authorization: `Bearer ${sessionData.session.access_token}`,
         },
       });
-
-      const data = await res.json();
-
+      const json = await res.json();
       if (res.ok) {
-        setSmartSummary(data.summary);
+        setSmartSummary(json.summary);
       } else {
-        setSmartSummary(`⚠️ ${data.error}`);
+        console.error("Server error summary:", json.error);
+        setSmartSummary(`⚠️ ${json.error}`);
       }
     } catch (err) {
-      console.error("Fetch failed:", err);
+      console.error("Fetch summary failed:", err);
       setSmartSummary("⚠️ Failed to generate summary.");
-    } finally {
-      setLoadingSummary(false);
     }
+    setLoadingSummaryManually(false);
   };
 
   const handleDelete = async (id) => {
-    const tx = transactions.find((tx) => tx.id === id);
-
+    const tx = (transactionsData ?? []).find((tx) => tx.id === id);
     if (tx?.receipt_url) {
-      try {
-        const pathMatch = tx.receipt_url.match(
-          /\/storage\/v1\/object\/public\/([^/]+)\/(.+)/
-        );
-        if (pathMatch && pathMatch.length === 3) {
-          const [, bucket, filePath] = pathMatch;
-          await supabase.storage.from(bucket).remove([filePath]);
-        }
-      } catch (err) {
-        console.error("Storage delete error:", err);
+      const match = tx.receipt_url.match(
+        /\/storage\/v1\/object\/public\/([^/]+)\/(.+)/
+      );
+      if (match) {
+        const [, bucket, filePath] = match;
+        await supabase.storage.from(bucket).remove([filePath]);
       }
     }
-
     const { error } = await supabase.from("expenses").delete().eq("id", id);
     if (!error) {
-      const updated = transactions.filter((tx) => tx.id !== id);
-      setTransactions(updated);
-      setFiltered(updated);
+      setFiltered((prev) => prev.filter((t) => t.id !== id));
+    } else {
+      console.error("Delete failed:", error);
     }
   };
-
-  useEffect(() => {
-    const filtered = transactions.filter((tx) => {
-      const matchCategory = categoryFilter
-        ? tx.category === categoryFilter
-        : true;
-      const matchDate = dateFilter ? tx.date === dateFilter : true;
-      const matchSearch = search
-        ? tx.description?.toLowerCase().includes(search.toLowerCase()) ||
-          tx.category?.toLowerCase().includes(search.toLowerCase())
-        : true;
-      return matchCategory && matchDate && matchSearch;
-    });
-    setFiltered(filtered);
-  }, [search, categoryFilter, dateFilter, transactions]);
 
   const chartData = {
     labels: [...new Set(filtered.map((tx) => tx.category))],
@@ -175,7 +149,7 @@ export default function Dashboard() {
     ],
   };
 
-  if (!user || loadingDashboard) {
+  if (loadingUser || loadingTransactions) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950">
         <LoaderSpinner />
@@ -183,9 +157,18 @@ export default function Dashboard() {
     );
   }
 
+  if (txError) {
+    console.error("SWR transactions error:", txError);
+  }
+  if (sumError) {
+    console.error("SWR summary error:", sumError);
+  }
+
+  const txs = transactionsData ?? [];
+
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 p-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
         <h1 className="text-2xl font-bold">
           Welcome back, {user.user_metadata?.name || "FinBuddy"} 👋
         </h1>
@@ -199,7 +182,7 @@ export default function Dashboard() {
         </Link>
       </div>
 
-      {transactions.length > 0 && (
+      {txs.length > 0 && (
         <>
           <div className="flex flex-wrap gap-4 mb-6">
             <input
@@ -244,6 +227,7 @@ export default function Dashboard() {
         </>
       )}
 
+      {/* Dashboard cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
         <DashboardCard
           icon={<ArrowUpRight className="text-emerald-500 w-5 h-5" />}
@@ -269,19 +253,23 @@ export default function Dashboard() {
           action={
             <Button
               onClick={fetchSmartSummary}
-              disabled={loadingSummary}
+              disabled={loadingSummaryFromSWR || loadingSummaryManually}
               className="mt-2 bg-yellow-500 text-white hover:bg-yellow-600"
             >
-              {loadingSummary ? "Generating..." : "Regenerate"}
+              {loadingSummaryFromSWR || loadingSummaryManually
+                ? "Generating..."
+                : "Regenerate"}
             </Button>
           }
         />
       </div>
 
+      {/* Smart Summary */}
       {smartSummary && (
-        <div className="relative mt-10 bg-gradient-to-br from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 transition-all duration-300">
-          {loadingSummary && <LoaderSpinner />}
-
+        <div className="relative mt-10 p-6 bg-gradient-to-br from-white to-gray-100 dark:from-gray-900 to-gray-800 rounded-xl shadow-lg border dark:border-gray-700 transition-all">
+          {(loadingSummaryFromSWR || loadingSummaryManually) && (
+            <LoaderSpinner />
+          )}
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xl font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-yellow-400" />
@@ -289,23 +277,22 @@ export default function Dashboard() {
             </h3>
             <Button
               onClick={fetchSmartSummary}
-              disabled={loadingSummary}
+              disabled={loadingSummaryFromSWR || loadingSummaryManually}
               className="text-xs px-3 py-1 bg-yellow-500 hover:bg-yellow-600 text-white rounded-md shadow-sm"
             >
-              {loadingSummary ? "Generating..." : "Regenerate"}
+              {loadingSummaryFromSWR || loadingSummaryManually
+                ? "Generating..."
+                : "Regenerate"}
             </Button>
           </div>
 
-          <div
-            className={`prose prose-sm max-w-none dark:prose-invert prose-headings:font-semibold prose-p:leading-relaxed prose-li:marker:text-indigo-500 ${
-              loadingSummary ? "opacity-50 pointer-events-none blur-sm" : ""
-            }`}
-          >
+          <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:font-semibold prose-p:leading-relaxed prose-li:marker:text-indigo-500 prose-ul:pl-5 prose-ul:mt-2">
             <ReactMarkdown>{smartSummary}</ReactMarkdown>
           </div>
         </div>
       )}
 
+      {/* Transaction list */}
       <div className="mt-10">
         <h2 className="text-xl font-semibold mb-4">Recent Transactions</h2>
         {filtered.length === 0 ? (
@@ -326,19 +313,23 @@ export default function Dashboard() {
                   <div>
                     <p className="font-medium">{tx.category}</p>
                     <p className="text-sm text-gray-500 dark:text-gray-400">
-                      {tx.date}
+                      {tx.date} —{" "}
+                      <span className="text-xs">
+                        Created: {new Date(tx.created_at).toLocaleString()}
+                      </span>
                     </p>
+
                     {tx.description && (
-                      <p className="text-sm italic text-gray-600 dark:text-gray-400 mt-1">
+                      <p className="italic text-sm mt-1 dark:text-gray-400">
                         {tx.description}
                       </p>
                     )}
                     {tx.insights_json && (
-                      <div className="mt-3 text-sm bg-gray-100 dark:bg-gray-700 p-3 rounded-md">
-                        <p className="text-purple-500 font-semibold mb-1">
+                      <div className="mt-3 p-3 text-sm bg-gray-100 dark:bg-gray-700 rounded-md">
+                        <p className="font-semibold mb-1 text-purple-500">
                           AI Insight:
                         </p>
-                        <ul className="list-disc list-inside text-gray-700 dark:text-gray-200">
+                        <ul className="list-disc list-inside dark:text-gray-200">
                           {tx.insights_json.items?.map((item, idx) => (
                             <li key={idx}>
                               {item} —{" "}
@@ -390,11 +381,7 @@ export default function Dashboard() {
                       className="mt-2 text-indigo-500 hover:text-indigo-700"
                       title="Edit"
                     >
-                      <Pencil
-                        className="w-4 h-4 text-indigo-500 cursor-pointer hover:text-indigo-700"
-                        onClick={() => router.push(`/edit-expense/${tx.id}`)}
-                        title="Edit"
-                      />
+                      <Pencil className="w-4 h-4" />
                     </button>
                   </div>
                 </div>

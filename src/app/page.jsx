@@ -84,7 +84,7 @@ export default function HomePage() {
       </section>
 
       {/* Features Section */}
-      <section className="px-6 py-16 bg-gray-50 dark:bg-gray-950">
+      <section className="bg-gradient-to-br from-blue-100 via-white to-purple-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-16 px-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -161,7 +161,7 @@ export default function HomePage() {
 function Feature({ icon, title, description }) {
   return (
     <motion.div
-      className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border dark:border-gray-700"
+      className="bg-white/20 dark:bg-gray-800/30 p-6 rounded-lg shadow-md border border-white/30 dark:border-gray-700 backdrop-blur-md"
       initial={{ opacity: 0, y: 30 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
@@ -173,7 +173,7 @@ function Feature({ icon, title, description }) {
           {title}
         </span>
       </div>
-      <p className="text-gray-600 dark:text-gray-300">{description}</p>
+      <p className="text-gray-700 dark:text-gray-300">{description}</p>
     </motion.div>
   );
 }
