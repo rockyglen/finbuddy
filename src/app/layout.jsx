@@ -1,5 +1,6 @@
+// app/layout.jsx
 import "./globals.css";
-import { ClerkProvider } from "@clerk/nextjs";
+import SupabaseWrapper from "@/lib/SupabaseWrapper"; // 👈 this will be a client component
 import Navbar from "@/components/Navbar";
 
 export const metadata = {
@@ -9,13 +10,13 @@ export const metadata = {
 
 export default function RootLayout({ children }) {
   return (
-    <ClerkProvider>
-      <html lang="en" className="dark">
-        <body className="bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+    <html lang="en" className="dark">
+      <body className="bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+        <SupabaseWrapper>
           <Navbar />
           {children}
-        </body>
-      </html>
-    </ClerkProvider>
+        </SupabaseWrapper>
+      </body>
+    </html>
   );
 }

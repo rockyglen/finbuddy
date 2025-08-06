@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import ReceiptUpload from "@/components/ReceiptUpload";
 import { supabase } from "@/lib/supabaseClient";
-import { useUser } from "@clerk/nextjs";
+import { useSession } from "@supabase/auth-helpers-react";
 
 const categories = [
   "Food",
@@ -19,6 +19,10 @@ const categories = [
 ];
 
 export default function AddExpenseForm() {
+  const session = useSession();
+  const router = useRouter();
+
+  const [loading, setLoading] = useState(true);
   const [amount, setAmount] = useState("");
   const [category, setCategory] = useState("");
   const [date, setDate] = useState(new Date().toISOString().split("T")[0]);
@@ -27,66 +31,95 @@ export default function AddExpenseForm() {
   const [previewUrl, setPreviewUrl] = useState(null);
   const [error, setError] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const { user } = useUser();
 
-  const router = useRouter();
+  const userId = session?.user?.id;
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // ✅ Auth check logic
+  useEffect(() => {
+    if (session === null) return;
+    if (!session?.user) router.push("/sign-in");
+    else setLoading(false);
+  }, [session, router]);
 
-    if (!amount || !category || !date) {
-      setError("Please fill in all required fields.");
-      return;
-    }
+  if (loading) return null;
 
-    let receiptUrl = null;
-    // Uploading receipt
-    if (receipt) {
-      const fileExt = receipt.name.split(".").pop();
-      const fileName = `${Date.now()}.${fileExt}`;
-      const { data, error: uploadError } = await supabase.storage
-        .from("receipts")
-        .upload(`user-${user.id}/${fileName}`, receipt);
-
-      if (uploadError) {
-        console.error(uploadError);
-        setError("Receipt upload failed.");
-        return;
-      }
-      const { data: publicUrlData } = supabase.storage
-        .from("receipts")
-        .getPublicUrl(`user-${user.id}/${fileName}`);
-
-      receiptUrl = publicUrlData?.publicUrl;
-    }
-
-    // Save expense to DB
-
-    const { error: dbError } = await supabase.from("expenses").insert([
-      {
-        user_id: user.id,
-        amount: parseFloat(amount),
-        category,
-        date,
-        description,
-        receipt_url: receiptUrl,
-      },
-    ]);
-
-    if (dbError) {
-      console.error(dbError);
-      setError("Saving to database failed.");
-      return;
-    }
-
-    router.push("/dashboard");
-  };
-
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
+  const handleFileChange = (file) => {
     if (file) {
       setReceipt(file);
       setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    console.log("🚀 Form submitted");
+
+    try {
+      let receiptUrl = null;
+
+      if (receipt) {
+        const fileExt = receipt.name.split(".").pop();
+        const fileName = `${Date.now()}.${fileExt}`;
+        const filePath = `${userId}/${fileName}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from("receipts")
+          .upload(filePath, receipt, {
+            upsert: false,
+            contentType: receipt.type,
+            metadata: { owner: userId },
+          });
+
+        if (uploadError) {
+          console.error("Upload failed:", uploadError);
+          setError("Receipt upload failed.");
+          return;
+        }
+
+        const { data: signedUrlData, error: signedUrlError } =
+          await supabase.storage
+            .from("receipts")
+            .createSignedUrl(filePath, 60 * 60);
+
+        if (signedUrlError) {
+          console.error("Signed URL generation failed:", signedUrlError);
+          setError("Could not generate access URL.");
+          return;
+        }
+
+        receiptUrl = signedUrlData?.signedUrl;
+        console.log("🧾 Signed Receipt URL:", receiptUrl);
+      }
+
+      // ✅ Required check moved here
+      if (!amount || !category || !date) {
+        setError("Please fill in all required fields.");
+        return;
+      }
+
+      const { error: dbError } = await supabase.from("expenses").insert([
+        {
+          user_id: userId,
+          amount: parseFloat(amount),
+          category,
+          date,
+          description,
+          receipt_url: receiptUrl,
+        },
+      ]);
+
+      if (dbError) {
+        console.error("Database insert failed:", dbError);
+        setError("Saving to database failed.");
+        return;
+      }
+
+      console.log("✅ Expense saved successfully!");
+      router.push("/dashboard");
+    } catch (err) {
+      console.error("Unexpected error:", err);
+      setError("Something went wrong.");
     }
   };
 
@@ -97,7 +130,6 @@ export default function AddExpenseForm() {
       animate={{ opacity: 1, y: 0 }}
     >
       <h1 className="text-3xl font-bold mb-6 text-center">Add New Expense</h1>
-
       {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
 
       <form
@@ -162,51 +194,36 @@ export default function AddExpenseForm() {
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
             className="w-full px-4 py-2 mt-1 border rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-white border-gray-300 dark:border-gray-700"
-            placeholder="E.g. Bought groceries at Walmart"
+            placeholder="Extensive description of the expense..."
           />
         </div>
-        <ReceiptUpload onFileSelect={(file) => setReceipt(file)} />
+
+        <ReceiptUpload onFileSelect={handleFileChange} />
+
         {receipt && (
           <motion.div
             className="mt-6"
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.4, ease: "easeOut" }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
           >
             <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
               Receipt Preview:
             </p>
-            {receipt?.type.startsWith("image/") ? (
-              <motion.img
-                key={receipt.name}
-                src={URL.createObjectURL(receipt)}
-                alt="Receipt preview"
-                className="w-full max-h-[500px] object-contain rounded-lg shadow-lg border dark:border-gray-700 cursor-zoom-in"
-                onClick={() => setShowModal(true)}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5 }}
-              />
-            ) : (
-              <motion.div
-                className="text-sm text-gray-600 dark:text-gray-300"
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4 }}
-              >
-                <span className="font-medium">Uploaded file: </span>
-                {receipt.name}
-              </motion.div>
-            )}
+            <img
+              src={previewUrl}
+              alt="Preview"
+              className="w-full max-h-[500px] object-contain rounded-lg shadow-lg border dark:border-gray-700"
+              onClick={() => setShowModal(true)}
+            />
           </motion.div>
         )}
+
         {showModal && (
           <div className="fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center">
             <img
-              src={URL.createObjectURL(receipt)}
+              src={previewUrl}
               alt="Full Receipt"
               className="max-w-full max-h-full rounded-lg shadow-lg"
-              onClick={() => setShowModal(false)}
             />
             <button
               onClick={() => setShowModal(false)}

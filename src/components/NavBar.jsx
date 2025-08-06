@@ -1,57 +1,90 @@
 "use client";
 
 import Link from "next/link";
-import { SignedIn, SignedOut, useClerk } from "@clerk/nextjs";
 import { Button } from "@/components/ui/button";
 import DarkModeToggle from "@/components/ui/DarkModeToggle";
 import { FaSignOutAlt } from "react-icons/fa";
+import { useUser, useSupabaseClient } from "@supabase/auth-helpers-react";
 
 export default function Navbar() {
-  const { signOut } = useClerk();
+  const user = useUser();
+  const supabase = useSupabaseClient();
 
   const handleSignOut = async () => {
-    await signOut();
+    await supabase.auth.signOut();
     window.location.href = "/";
   };
 
   return (
-    <header className="w-full border-b bg-white dark:bg-gray-950 dark:border-gray-800 sticky top-0 z-50">
-      <div className="mx-auto w-full max-w-screen-xl px-6 py-4 flex items-center justify-between">
-        {/* Left placeholder to balance flex */}
-        <div className="w-1/3"></div>
+    <header className="sticky top-0 z-50 backdrop-blur border-b dark:border-gray-800 bg-white/70 dark:bg-gray-950/70 shadow-sm">
+      <nav className="max-w-screen-xl mx-auto px-6 py-4 flex items-center justify-between">
+        {/* Brand */}
+        <Link
+          href="/"
+          className="text-2xl font-extrabold tracking-tight text-indigo-600 dark:text-indigo-400 hover:opacity-90 transition"
+        >
+          FinBuddy
+        </Link>
 
-        {/* Logo centered */}
-        <div className="w-1/3 text-center">
-          <h1 className="text-xl font-bold text-indigo-600 dark:text-indigo-400">
-            <Link href="/">FinBuddy</Link>
-          </h1>
-        </div>
+        {/* Links */}
+        <div className="flex items-center gap-4">
+          {/* Dashboard link */}
+          {user && (
+            <Link href="/dashboard">
+              <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-gray-100 hover:bg-indigo-100 text-gray-700 hover:text-indigo-700 dark:bg-gray-800 dark:hover:bg-indigo-900 dark:text-gray-300 dark:hover:text-indigo-300 transition-all duration-200 shadow">
+                Dashboard
+              </span>
+            </Link>
+          )}
 
-        {/* Right Auth & Toggle */}
-        <div className="w-1/3 flex justify-end items-center space-x-4">
+          {/* Add Expense */}
+          {user && (
+            <Link href="/add-expense">
+              <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white transition-all duration-200 shadow">
+                + Add Expense
+              </span>
+            </Link>
+          )}
+
+          {/* About */}
+          <Link href="/about">
+            <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-gray-100 hover:bg-indigo-100 text-gray-700 hover:text-indigo-700 dark:bg-gray-800 dark:hover:bg-indigo-900 dark:text-gray-300 dark:hover:text-indigo-300 transition-all duration-200 shadow">
+              About
+            </span>
+          </Link>
+
+          {/* Dark Mode Toggle */}
           <DarkModeToggle />
 
-          <SignedOut>
-            <Link href="/sign-in">
-              <Button variant="ghost">Sign In</Button>
-            </Link>
-            <Link href="/sign-up">
-              <Button>Get Started</Button>
-            </Link>
-          </SignedOut>
-
-          <SignedIn>
+          {/* Auth */}
+          {!user ? (
+            <>
+              <Link href="/sign-in">
+                <Button
+                  variant="ghost"
+                  className="hover:bg-gray-100 dark:hover:bg-gray-800 transition rounded-full px-4 py-2 text-sm"
+                >
+                  Sign In
+                </Button>
+              </Link>
+              <Link href="/sign-up">
+                <Button className="bg-indigo-600 hover:bg-indigo-700 text-white rounded-full px-4 py-2 text-sm shadow">
+                  Get Started
+                </Button>
+              </Link>
+            </>
+          ) : (
             <Button
               onClick={handleSignOut}
-              variant="ghost"
-              className="flex items-center gap-2 text-sm"
+              variant="outline"
+              className="flex items-center gap-2 text-sm hover:bg-red-100 hover:text-red-600 border-gray-300 dark:border-gray-700 dark:hover:bg-red-900 dark:hover:text-red-400 rounded-full px-4 py-2 transition"
             >
-              <FaSignOutAlt />
+              <FaSignOutAlt className="w-4 h-4" />
               Sign Out
             </Button>
-          </SignedIn>
+          )}
         </div>
-      </div>
+      </nav>
     </header>
   );
 }

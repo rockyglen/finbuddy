@@ -1,20 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { SignedIn, SignedOut } from "@clerk/nextjs";
+import { useUser } from "@supabase/auth-helpers-react";
 import { Button } from "@/components/ui/button";
 import { CheckCircle, Brain, Camera, ShieldCheck } from "lucide-react";
 import DarkModeToggle from "@/components/ui/DarkModeToggle";
 import { motion } from "framer-motion";
 
 export default function HomePage() {
+  const user = useUser();
+
   return (
     <div className="min-h-screen bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100 flex flex-col">
-      {/* Navbar */}
-
       {/* Hero Section */}
       <section className="relative flex-1 flex flex-col items-center justify-center text-center px-6 py-20 bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-950 dark:to-black dark:bg-gray-950 overflow-hidden">
-        {/* Background SVG Blob */}
         <svg
           className="absolute top-0 left-0 w-full h-full object-cover opacity-20 dark:opacity-10 -z-10"
           viewBox="0 0 1024 1024"
@@ -40,7 +39,6 @@ export default function HomePage() {
           </defs>
         </svg>
 
-        {/* Animated Heading */}
         <motion.h2
           className="text-4xl font-bold mb-4 text-gray-900 dark:text-white"
           initial={{ opacity: 0, y: -30 }}
@@ -66,12 +64,11 @@ export default function HomePage() {
           transition={{ duration: 0.5, delay: 0.4 }}
           className="space-x-4"
         >
-          <SignedOut>
+          {!user ? (
             <Link href="/sign-up">
               <Button size="lg">Create your account</Button>
             </Link>
-          </SignedOut>
-          <SignedIn>
+          ) : (
             <div className="space-x-4">
               <Link href="/dashboard">
                 <Button size="lg">Go to Dashboard</Button>
@@ -82,7 +79,7 @@ export default function HomePage() {
                 </Button>
               </Link>
             </div>
-          </SignedIn>
+          )}
         </motion.div>
       </section>
 
@@ -100,17 +97,6 @@ export default function HomePage() {
               We combine simplicity, AI, and automation to make your finances
               effortless.
             </p>
-            {/* <h3 className="text-3xl font-semibold mb-4 text-gray-900 dark:text-white">
-            See it in Action
-          </h3>
-          <p className="text-gray-600 mb-6">
-            Here’s a quick look at FinBuddy in real use.
-          </p>
-          <img
-            src="/assets/dashboard-demo.gif"
-            alt="FinBuddy Dashboard Preview"
-            className="rounded-lg shadow-xl mx-auto max-w-full"
-          /> */}
           </div>
         </motion.div>
 
@@ -139,32 +125,6 @@ export default function HomePage() {
       </section>
 
       {/* Final CTA */}
-
-      <section className="px-6 py-16 bg-gray-100 dark:bg-gray-950 ">
-        <motion.div
-          className="grid md:grid-cols-2 gap-6 text-left"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={{
-            hidden: {},
-            visible: {
-              transition: {
-                staggerChildren: 0.25,
-              },
-            },
-          }}
-        >
-          <Testimonial
-            name="Priya Nair"
-            text="FinBuddy helped me understand where my money was leaking. The AI insights are scary accurate!"
-          />
-          <Testimonial
-            name="Liam Carter"
-            text="Clean UI. Fast UX. Exactly what I needed to manage personal + freelance expenses in one place."
-          />
-        </motion.div>
-      </section>
       <section className="bg-indigo-600 text-black dark:text-white dark:bg-gray-950 text-center px-6 py-16">
         <h4 className="text-3xl font-bold mb-4">
           Start taking control of your finances
@@ -172,7 +132,8 @@ export default function HomePage() {
         <p className="mb-6 text-lg">
           Sign up now and join the modern finance revolution.
         </p>
-        <SignedOut>
+
+        {!user ? (
           <Link href="/sign-up">
             <Button
               size="lg"
@@ -181,8 +142,7 @@ export default function HomePage() {
               Get Started
             </Button>
           </Link>
-        </SignedOut>
-        <SignedIn>
+        ) : (
           <Link href="/dashboard">
             <Button
               variant="outline"
@@ -192,7 +152,7 @@ export default function HomePage() {
               Go to Dashboard
             </Button>
           </Link>
-        </SignedIn>
+        )}
       </section>
     </div>
   );
