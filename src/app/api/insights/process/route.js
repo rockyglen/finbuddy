@@ -10,12 +10,21 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
+// 🔧 Utility to extract JSON from Markdown
+function extractJSONFromMarkdown(markdown) {
+  const match = markdown.match(/```json([\s\S]*?)```/);
+  if (match) return match[1].trim();
+  return markdown.trim(); // fallback: try parsing raw string
+}
+
 export async function POST() {
   try {
+    // 1. Fetch a receipt with OCR text but no insights
     const { data: receipts, error } = await supabase
       .from("expenses")
       .select("*")
       .is("insights_json", null)
+      .not("ocr_text", "is", null)
       .order("created_at", { ascending: false })
       .limit(1);
 
@@ -29,6 +38,7 @@ export async function POST() {
     const receipt = receipts[0];
     console.log("🧠 Generating insights for:", receipt.id);
 
+    // 2. Construct the prompt
     const prompt = `
 You are a financial assistant. Your job is to extract actionable insights from OCR text of a retail receipt. Use the text to identify:
 1. Store name
@@ -65,8 +75,9 @@ ${receipt.ocr_text}
 \`\`\`
 `;
 
+    // 3. Send to OpenAI
     const completion = await openai.chat.completions.create({
-      model: "gpt-4-1106-preview", // Replace with "gpt-4.1-nano" if using OCI-compatible
+      model: "gpt-4-1106-preview", // OCI-compatible model name if using self-hosted
       temperature: 0.2,
       messages: [
         { role: "system", content: "You are a personal finance assistant." },
@@ -78,28 +89,34 @@ ${receipt.ocr_text}
     let insights_json;
 
     try {
-      insights_json = JSON.parse(insightsRaw);
+      const cleaned = extractJSONFromMarkdown(insightsRaw);
+      insights_json = JSON.parse(cleaned);
     } catch (parseError) {
-      console.error("Failed to parse insights JSON:", parseError);
-      console.error("Raw response:", insightsRaw);
+      console.error("❌ Failed to parse insights JSON:", parseError);
+      console.error("🧾 Raw response:", insightsRaw);
       return Response.json(
         { error: "Invalid JSON from LLM", raw: insightsRaw },
         { status: 500 }
       );
     }
 
+    // 4. Update DB
     const { error: updateError } = await supabase
       .from("expenses")
       .update({ insights_json })
       .eq("id", receipt.id);
 
     if (updateError) {
-      throw updateError;
+      console.error("❌ Failed to update Supabase:", updateError);
+      return Response.json(
+        { error: "Failed to store insights in DB" },
+        { status: 500 }
+      );
     }
 
     return Response.json({ status: "success", insights: insights_json });
   } catch (err) {
-    console.error("Insights route error:", err);
+    console.error("🔥 Insights route error:", err);
     return Response.json({ error: "Server error" }, { status: 500 });
   }
 }

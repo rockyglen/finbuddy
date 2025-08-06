@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { supabase } from "@/lib/supabaseClient";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowUpRight, Upload, Sparkles, Trash } from "lucide-react";
+import { ArrowUpRight, Upload, Sparkles, Trash, Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Bar } from "react-chartjs-2";
 import {
@@ -19,6 +19,8 @@ import {
 
 import ReactMarkdown from "react-markdown";
 
+import LoaderSpinner from "@/components/ui/LoaderSpinner";
+
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
 
 export default function Dashboard() {
@@ -31,23 +33,31 @@ export default function Dashboard() {
   const [search, setSearch] = useState("");
   const [smartSummary, setSmartSummary] = useState(null);
   const [loadingSummary, setLoadingSummary] = useState(false);
+  const [loadingDashboard, setLoadingDashboard] = useState(true);
 
   useEffect(() => {
     const getUserAndData = async () => {
-      const {
-        data: { session },
-      } = await supabase.auth.getSession();
+      try {
+        setLoadingDashboard(true);
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
 
-      if (!session?.user) {
-        router.push("/sign-in");
-        return;
+        if (!session?.user) {
+          router.push("/sign-in");
+          return;
+        }
+
+        const user = session.user;
+        setUser(user);
+
+        await fetchExpenses(user.id);
+        await fetchSavedSummary(user.id);
+      } catch (err) {
+        console.error("Dashboard fetch error:", err);
+      } finally {
+        setLoadingDashboard(false);
       }
-
-      const user = session.user;
-      setUser(user);
-
-      await fetchExpenses(user.id);
-      await fetchSavedSummary(user.id);
     };
 
     getUserAndData();
@@ -165,7 +175,13 @@ export default function Dashboard() {
     ],
   };
 
-  if (!user) return null;
+  if (!user || loadingDashboard) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-white dark:bg-gray-950">
+        <LoaderSpinner />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 p-6">
@@ -263,7 +279,9 @@ export default function Dashboard() {
       </div>
 
       {smartSummary && (
-        <div className="mt-10 bg-gradient-to-br from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 transition-all duration-300">
+        <div className="relative mt-10 bg-gradient-to-br from-white via-gray-50 to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 p-6 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 transition-all duration-300">
+          {loadingSummary && <LoaderSpinner />}
+
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-xl font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-yellow-400" />
@@ -278,7 +296,11 @@ export default function Dashboard() {
             </Button>
           </div>
 
-          <div className="prose prose-sm max-w-none dark:prose-invert prose-headings:font-semibold prose-p:leading-relaxed prose-li:marker:text-indigo-500">
+          <div
+            className={`prose prose-sm max-w-none dark:prose-invert prose-headings:font-semibold prose-p:leading-relaxed prose-li:marker:text-indigo-500 ${
+              loadingSummary ? "opacity-50 pointer-events-none blur-sm" : ""
+            }`}
+          >
             <ReactMarkdown>{smartSummary}</ReactMarkdown>
           </div>
         </div>
@@ -362,6 +384,17 @@ export default function Dashboard() {
                       title="Delete"
                     >
                       <Trash className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => router.push(`/edit-expense/${tx.id}`)}
+                      className="mt-2 text-indigo-500 hover:text-indigo-700"
+                      title="Edit"
+                    >
+                      <Pencil
+                        className="w-4 h-4 text-indigo-500 cursor-pointer hover:text-indigo-700"
+                        onClick={() => router.push(`/edit-expense/${tx.id}`)}
+                        title="Edit"
+                      />
                     </button>
                   </div>
                 </div>

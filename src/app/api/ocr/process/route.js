@@ -15,7 +15,7 @@ export async function POST() {
       .select("id, receipt_url, ocr_attempts")
       .is("ocr_text", null)
       .lt("ocr_attempts", 3)
-      .limit(1);
+      .not("receipt_url", "is", null);
 
     if (error) {
       console.error("DB fetch error:", error);
@@ -32,6 +32,11 @@ export async function POST() {
     const expense = expenses[0];
     const imageUrl = expense.receipt_url;
     console.log("🔍 OCR on:", imageUrl);
+
+    if (!imageUrl) {
+      console.error("Missing receipt_url for expense:", expense.id);
+      return Response.json({ error: "Missing receipt URL." }, { status: 400 });
+    }
 
     // 2. Detect filetype from URL
     const extension = imageUrl.split(".").pop().split("?")[0].toLowerCase();

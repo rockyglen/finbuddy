@@ -54,32 +54,29 @@ export async function POST(req) {
   }));
 
   const prompt = `
-You are my personal financial assistant. I’ve provided you with at least 5 of my monthly expenses. Your job is to:
+You are a personal finance assistant.
 
-    Track my spending across categories and show me clear trends over time.
+Your job is to analyze a user's historical expense data and write a smart, readable summary of their spending habits and trends. The user may have anywhere from 2 weeks to several months of data.
 
-    Summarize where my money is going (percentages, visuals if possible).
+Here is a JSON array of their expenses. Each entry includes amount, category, and date.
 
-    Identify areas I might be overspending, gently suggesting optimizations without judgment.
+Your goals:
+1. Detect high spending areas or patterns
+2. Highlight category-wise trends (e.g. increasing Food costs)
+3. Mention any unusual or one-time large expenses
+4. Estimate their **average monthly** (or weekly, if <30 days) spending
+5. Offer 2–3 actionable budgeting suggestions to help them save money
+6. If the data covers less than a month, note that it’s early to draw strong conclusions
+7. What are the top 3 categories they spend on?
+8. What is their largest single expense?
+9. What is their most frequent expense category?
+10. What is their average expense amount?
+11. How can they optimize their spending in the top category?
 
-    Provide insights into how my spending aligns with healthy financial habits (e.g., ideal % for rent, savings, discretionary).
+Respond in a clear way and most legible way, as if you were explaining to a friend. Use simple language and avoid jargon.
+Include as many emojis as possible to make it fun and engaging. 
 
-    Help me plan ahead, offering monthly and weekly summaries, suggestions for savings, and light goal tracking.
-
-Please keep everything clear, professional, and friendly — I want helpful, data-driven insights that support smarter decisions, not pressure or shame. Be encouraging and honest..
-
-Also tell me how I can use this data to improve my financial health and save money. Make it actionable and easy to understand, with clear next steps I can take.
-  
-make it nice for a website.
-    
-    Include as many emojis as possible to make it fun and engaging.   
-    ONLY PURE TEXT
-    
-    DO NOT GIVE ME A JARGON RESPONSE, COME TO THE POINT QUICKLY AND EFFICIENTLY.
-    EVEN A DUMB PERSON SHOULD BE ABLE TO UNDERSTAND IT.
-    NOT MORE THAN 250 WORDS.
-    Use the following data to generate insights:
-Data:
+Expenses:
 \`\`\`json
 ${JSON.stringify(formatted, null, 2)}
 \`\`\`
@@ -113,14 +110,19 @@ ${JSON.stringify(formatted, null, 2)}
   }
 
   // ✅ 5. Store in ai_summary
-  const { error: insertError } = await supabase.from("ai_summary").insert([
+  const { error: upsertError } = await supabase.from("ai_summary").upsert(
+    [
+      {
+        user_id: user.id,
+        summary_text: summary,
+      },
+    ],
     {
-      user_id: user.id,
-      summary_text: summary,
-    },
-  ]);
+      onConflict: "user_id", // crucial to avoid duplicates
+    }
+  );
 
-  if (insertError) {
+  if (upsertError) {
     return Response.json({ error: "Failed to save summary" }, { status: 500 });
   }
 

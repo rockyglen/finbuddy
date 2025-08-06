@@ -147,7 +147,7 @@ export default function HomePage() {
             <Button
               variant="outline"
               size="lg"
-              className="border-white text-white hover:bg-white hover:text-indigo-600 transition"
+              className="text-indigo-600 border-indigo-600 hover:bg-indigo-600 hover:text-white dark:text-white dark:border-white dark:hover:bg-white dark:hover:text-indigo-600 transition"
             >
               Go to Dashboard
             </Button>
