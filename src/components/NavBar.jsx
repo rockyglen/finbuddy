@@ -6,7 +6,7 @@ import DarkModeToggle from "@/components/ui/DarkModeToggle";
 import { FaSignOutAlt } from "react-icons/fa";
 import { useUser, useSupabaseClient } from "@supabase/auth-helpers-react";
 
-export default function Navbar() {
+export default function NavBar() {
   const user = useUser();
   const supabase = useSupabaseClient();
 

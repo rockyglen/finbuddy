@@ -1,7 +1,7 @@
 // app/layout.jsx
 import "./globals.css";
 import SupabaseWrapper from "@/lib/SupabaseWrapper"; // 👈 this will be a client component
-import Navbar from "@/components/Navbar";
+import NavBar from "@/components/NavBar";
 
 export const metadata = {
   title: "FinBuddy",
@@ -13,7 +13,7 @@ export default function RootLayout({ children }) {
     <html lang="en" className="dark">
       <body className="bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
         <SupabaseWrapper>
-          <Navbar />
+          <NavBar />
           {children}
         </SupabaseWrapper>
       </body>
