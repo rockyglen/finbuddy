@@ -3,153 +3,156 @@
 import Link from "next/link";
 import { useUser } from "@supabase/auth-helpers-react";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Brain, Camera, ShieldCheck } from "lucide-react";
-import DarkModeToggle from "@/components/ui/DarkModeToggle";
 import { motion } from "framer-motion";
+import {
+  Camera,
+  Brain,
+  LayoutDashboard,
+  FileText,
+  CircleDollarSign,
+  ShieldCheck,
+} from "lucide-react";
 
 export default function HomePage() {
   const user = useUser();
 
   return (
-    <div className="min-h-screen bg-white text-gray-900 dark:bg-gray-950 dark:text-gray-100 flex flex-col">
-      {/* Hero Section */}
-      <section className="relative flex-1 flex flex-col items-center justify-center text-center px-6 py-20 bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-950 dark:to-black dark:bg-gray-950 overflow-hidden">
-        <svg
-          className="absolute top-0 left-0 w-full h-full object-cover opacity-20 dark:opacity-10 -z-10"
-          viewBox="0 0 1024 1024"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-        >
-          <path
-            fill="url(#gradient)"
-            d="M737.6 104.2c54.7 39.8 95.4 103 96.5 168.8.9 65.1-35.8 131.5-86.2 183.3-50.5 51.8-115.6 89.1-178.8 109.2-63.3 20.1-125.7 23.2-183.2 6.4-57.4-16.8-109.9-55.7-137.3-107.8-27.5-52.2-29.9-116.6-4.2-172.2 25.7-55.6 77.2-102.2 135.6-125.2 58.5-23 124.1-22.6 186.1-2.5 62 20.1 120.6 58 171.5 99.8z"
-          />
-          <defs>
-            <linearGradient
-              id="gradient"
-              x1="0"
-              x2="1024"
-              y1="0"
-              y2="1024"
-              gradientUnits="userSpaceOnUse"
-            >
-              <stop stopColor="#6366F1" />
-              <stop offset="1" stopColor="#8B5CF6" />
-            </linearGradient>
-          </defs>
-        </svg>
-
-        <motion.h2
-          className="text-4xl font-bold mb-4 text-gray-900 dark:text-white"
+    <div className="min-h-screen flex flex-col">
+      {/* Hero */}
+      <section className="flex flex-col items-center justify-center text-center px-6 py-24 bg-gradient-to-br from-indigo-50 to-purple-100 dark:from-gray-900 dark:to-black relative overflow-hidden">
+        <motion.h1
+          className="text-4xl sm:text-5xl font-bold mb-4 z-10"
           initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          transition={{ duration: 0.7 }}
         >
-          Master your money with FinBuddy 💰
-        </motion.h2>
-
+          Your Smart Finance Sidekick 💸
+        </motion.h1>
         <motion.p
-          className="text-gray-600 dark:text-gray-300 max-w-xl mb-6 text-lg"
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
+          className="text-lg text-gray-700 dark:text-gray-300 max-w-xl mb-6 z-10"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.2, duration: 0.6 }}
         >
-          Your personal finance sidekick — track your expenses, scan receipts,
-          and get smart AI insights all in one place.
+          Upload receipts, analyze spending, get AI summaries — all in one
+          modern, secure dashboard.
         </motion.p>
 
         <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="space-x-4"
+          className="space-x-4 z-10"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4, duration: 0.5 }}
         >
-          {!user ? (
-            <Link href="/sign-up">
-              <Button size="lg">Create your account</Button>
-            </Link>
-          ) : (
-            <div className="space-x-4">
+          {user ? (
+            <>
               <Link href="/dashboard">
                 <Button size="lg">Go to Dashboard</Button>
               </Link>
-              <Link href="/add-expense">
+              <Link href="/upload-only">
                 <Button size="lg" variant="outline">
-                  Add Expense
+                  Upload Receipt
                 </Button>
               </Link>
-            </div>
+            </>
+          ) : (
+            <Link href="/sign-up">
+              <Button size="lg">Get Started Free</Button>
+            </Link>
           )}
         </motion.div>
       </section>
 
-      {/* Features Section */}
-      <section className="bg-gradient-to-br from-blue-100 via-white to-purple-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 py-16 px-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="space-x-4"
-        >
-          <div className="max-w-4xl mx-auto text-center mb-12">
-            <h3 className="text-3xl font-semibold">Why FinBuddy?</h3>
-            <p className="text-gray-600 dark:text-gray-300 mt-2">
-              We combine simplicity, AI, and automation to make your finances
-              effortless.
-            </p>
-          </div>
-        </motion.div>
+      {/* Features */}
+      <section className="py-20 px-6 bg-white dark:bg-gray-900">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold mb-2">Features That Matter</h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            Designed to simplify your financial life.
+          </p>
+        </div>
 
-        <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
           <Feature
-            icon={<CheckCircle className="text-indigo-600 w-6 h-6" />}
-            title="Track Every Penny"
-            description="Manually or automatically log expenses with intuitive tools."
+            icon={<Camera />}
+            title="Scan Receipts"
+            desc="Upload your receipts and let OCR handle the rest."
           />
           <Feature
-            icon={<Camera className="text-indigo-600 w-6 h-6" />}
-            title="Scan Receipts Instantly"
-            description="Use OCR to capture expenses from photos — fast and accurate."
+            icon={<Brain />}
+            title="AI Smart Summary"
+            desc="Understand where your money goes with GPT-4.1 summaries."
           />
           <Feature
-            icon={<Brain className="text-indigo-600 w-6 h-6" />}
-            title="AI-Powered Insights"
-            description="Get smart summaries and spending tips generated by GPT-4.1."
+            icon={<CircleDollarSign />}
+            title="Budget Tracker"
+            desc="Visualize and manage your monthly spending."
           />
           <Feature
-            icon={<ShieldCheck className="text-indigo-600 w-6 h-6" />}
-            title="Secure & Private"
-            description="Google, GitHub, and email sign-in — your data stays yours."
+            icon={<LayoutDashboard />}
+            title="Clean Dashboard"
+            desc="All your insights in one place. Sleek, fast, secure."
+          />
+          <Feature
+            icon={<FileText />}
+            title="Expense History"
+            desc="Browse, search, and filter your past spending easily."
+          />
+          <Feature
+            icon={<ShieldCheck />}
+            title="Private & Secure"
+            desc="We respect your data. You own it. End of story."
+          />
+        </div>
+      </section>
+
+      {/* Testimonials */}
+      <section className="bg-gray-100 dark:bg-gray-800 py-20 px-6">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold mb-2">Why Users Love It</h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            It’s not just features — it’s peace of mind.
+          </p>
+        </div>
+
+        <div className="max-w-4xl mx-auto grid md:grid-cols-2 gap-6">
+          <Testimonial
+            name="Sarah M."
+            text="FinBuddy helped me realize I was spending $250/month on coffee. Game changer."
+          />
+          <Testimonial
+            name="Mark T."
+            text="I love the AI summaries — finally a budgeting app that makes sense."
           />
         </div>
       </section>
 
       {/* Final CTA */}
-      <section className="bg-indigo-600 text-black dark:text-white dark:bg-gray-950 text-center px-6 py-16">
-        <h4 className="text-3xl font-bold mb-4">
-          Start taking control of your finances
-        </h4>
+      <section className="bg-indigo-600 text-white dark:bg-indigo-700 text-center px-6 py-20">
+        <h3 className="text-3xl font-bold mb-4">
+          Start mastering your money today
+        </h3>
         <p className="mb-6 text-lg">
-          Sign up now and join the modern finance revolution.
+          FinBuddy gives you control, clarity, and confidence.
         </p>
 
-        {!user ? (
-          <Link href="/sign-up">
-            <Button
-              size="lg"
-              className="bg-white text-indigo-600 hover:bg-gray-100 transition"
-            >
-              Get Started
-            </Button>
-          </Link>
-        ) : (
+        {user ? (
           <Link href="/dashboard">
             <Button
               variant="outline"
               size="lg"
-              className="text-indigo-600 border-indigo-600 hover:bg-indigo-600 hover:text-white dark:text-white dark:border-white dark:hover:bg-white dark:hover:text-indigo-600 transition"
+              className="text-white border-white hover:bg-white hover:text-indigo-600"
             >
               Go to Dashboard
+            </Button>
+          </Link>
+        ) : (
+          <Link href="/sign-up">
+            <Button
+              size="lg"
+              className="bg-white text-indigo-600 hover:bg-gray-100"
+            >
+              Sign Up Free
             </Button>
           </Link>
         )}
@@ -158,40 +161,27 @@ export default function HomePage() {
   );
 }
 
-function Feature({ icon, title, description }) {
+function Feature({ icon, title, desc }) {
   return (
-    <motion.div
-      className="bg-white/20 dark:bg-gray-800/30 p-6 rounded-lg shadow-md border border-white/30 dark:border-gray-700 backdrop-blur-md"
-      initial={{ opacity: 0, y: 30 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.6 }}
-    >
-      <div className="flex items-center mb-3">
+    <div className="flex items-start space-x-4">
+      <div className="p-3 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300">
         {icon}
-        <span className="ml-2 text-xl font-semibold text-gray-900 dark:text-white">
-          {title}
-        </span>
       </div>
-      <p className="text-gray-700 dark:text-gray-300">{description}</p>
-    </motion.div>
+      <div>
+        <h3 className="text-lg font-semibold">{title}</h3>
+        <p className="text-gray-600 dark:text-gray-400">{desc}</p>
+      </div>
+    </div>
   );
 }
 
 function Testimonial({ name, text }) {
   return (
-    <motion.div
-      className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md border dark:border-gray-700"
-      variants={{
-        hidden: { opacity: 0, y: 20 },
-        visible: { opacity: 1, y: 0 },
-      }}
-      transition={{ duration: 0.2 }}
-    >
-      <p className="text-gray-700 dark:text-gray-300 italic">“{text}”</p>
-      <div className="mt-4 font-semibold text-indigo-600 dark:text-indigo-400">
-        {name}
-      </div>
-    </motion.div>
+    <div className="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md">
+      <p className="italic text-gray-700 dark:text-gray-300">"{text}"</p>
+      <p className="mt-4 text-right font-semibold text-gray-900 dark:text-white">
+        — {name}
+      </p>
+    </div>
   );
 }

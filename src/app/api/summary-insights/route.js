@@ -76,6 +76,14 @@ Your goals:
 Respond in a clear way and most legible way, as if you were explaining to a friend. Use simple language and avoid jargon.
 Include as many emojis as possible to make it fun and engaging. 
 
+DO NOT GIVE ME ANY SCRIPTS OR CODE. 
+
+EXPLAIN UNDER 250 WORDS.
+
+GIVE ME IN BULLET POINTS. WHERE I AM SPENDING MONEY AND HOW I CAN SAVE MONEY.
+
+THIS RESPONSE WILL BE SHOWN TO THE USER IN A WEB APP.
+IF NEEDED, SEARCH THE WEB FOR THE LATEST TRENDS IN PERSONAL FINANCE.
 Expenses:
 \`\`\`json
 ${JSON.stringify(formatted, null, 2)}

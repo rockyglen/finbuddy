@@ -1,7 +1,6 @@
 import * as React from "react";
 import { Slot } from "@radix-ui/react-slot";
 import { cva } from "class-variance-authority";
-
 import { cn } from "@/lib/utils";
 
 const buttonVariants = cva(
@@ -35,15 +34,36 @@ const buttonVariants = cva(
   }
 );
 
-function Button({ className, variant, size, asChild = false, ...props }) {
+// ✅ Safe version with support for loading and children override
+function Button({
+  className,
+  variant,
+  size,
+  asChild = false,
+  loading = false,
+  disabled,
+  children,
+  ...rest
+}) {
   const Comp = asChild ? Slot : "button";
 
   return (
     <Comp
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
-      {...props}
-    />
+      disabled={disabled || loading}
+      aria-busy={loading ? "true" : undefined}
+      {...rest}
+    >
+      {loading ? (
+        <>
+          <span className="animate-spin rounded-full h-4 w-4 border-2 border-t-transparent border-white" />
+          Loading...
+        </>
+      ) : (
+        children
+      )}
+    </Comp>
   );
 }
 
