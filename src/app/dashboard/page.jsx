@@ -55,8 +55,14 @@ export default function Dashboard() {
     data: transactionsData,
     isLoading: loadingTransactions,
     error: txError,
-  } = useSWR(shouldFetch ? ["expenses", user.id] : null, () =>
-    getExpenses(user.id)
+  } = useSWR(
+    shouldFetch ? ["expenses", user.id] : null,
+    () => getExpenses(user.id),
+    {
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+      refreshInterval: 0,
+    }
   );
 
   const {
