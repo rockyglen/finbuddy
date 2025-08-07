@@ -12,6 +12,8 @@ const inputStyle =
 
 export default function SignUpPage() {
   const router = useRouter();
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -23,30 +25,48 @@ export default function SignUpPage() {
       options: { redirectTo: `${window.location.origin}/dashboard` },
     });
 
-    if (error) setError(`Sign up with ${provider} failed`);
+    if (error) {
+      setError(`Sign up with ${provider} failed`);
+      console.error(error);
+    }
   };
 
   const handleSignUp = async (e) => {
     e.preventDefault();
     setError(null);
 
+    if (!firstName.trim() || !lastName.trim()) {
+      setError("First and last name are required");
+      return;
+    }
+
     if (password !== confirmPassword) {
       setError("Passwords do not match");
       return;
     }
 
+    const fullName = `${firstName.trim()} ${lastName.trim()}`;
+
     const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: `${window.location.origin}/dashboard` },
+      options: {
+        emailRedirectTo: `${window.location.origin}/dashboard`,
+        data: {
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+          full_name: fullName,
+        },
+      },
     });
 
     if (signUpError) {
       setError(signUpError.message || "Failed to sign up");
       return;
+    } else {
+      localStorage.setItem("pending_email", email);
+      router.push("/verify-email");
     }
-
-    router.push("/dashboard");
   };
 
   return (
@@ -79,6 +99,34 @@ export default function SignUpPage() {
 
         <div className="border-t pt-6 space-y-4">
           <form onSubmit={handleSignUp} className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                First Name
+              </label>
+              <input
+                type="text"
+                value={firstName}
+                onChange={(e) => setFirstName(e.target.value)}
+                placeholder="John"
+                className={inputStyle}
+                required
+              />
+            </div>
+
+            <div>
+              <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Last Name
+              </label>
+              <input
+                type="text"
+                value={lastName}
+                onChange={(e) => setLastName(e.target.value)}
+                placeholder="Doe"
+                className={inputStyle}
+                required
+              />
+            </div>
+
             <div>
               <label className="text-sm font-medium text-gray-700 dark:text-gray-300">
                 Email

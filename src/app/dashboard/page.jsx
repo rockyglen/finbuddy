@@ -176,7 +176,13 @@ export default function Dashboard() {
     <div className="min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100 p-6">
       <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
         <h1 className="text-2xl font-bold">
-          Welcome back, {user.user_metadata?.name || "FinBuddy"} 👋
+          Welcome back,{" "}
+          {user?.user_metadata?.display_name ||
+            user?.user_metadata?.full_name ||
+            user.user_metadata.name ||
+            user.email.split("@")[0] ||
+            "FinBuddy"}{" "}
+          👋
         </h1>
         <Link href="/add-expense">
           <Button
@@ -246,7 +252,7 @@ export default function Dashboard() {
           icon={<Upload className="text-blue-500 w-5 h-5" />}
           title="Upload Receipt"
           action={
-            <Link href="/add-expense">
+            <Link href="/upload-only">
               <Button variant="outline" size="sm" className="mt-2">
                 Upload <Upload className="w-4 h-4 ml-2" />
               </Button>

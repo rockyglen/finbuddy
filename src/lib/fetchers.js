@@ -24,7 +24,7 @@ export const getSmartSummary = async (uid) => {
     .eq("user_id", uid)
     .order("created_at", { ascending: false })
     .limit(1)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error("❌ Supabase error in getSmartSummary:", error);

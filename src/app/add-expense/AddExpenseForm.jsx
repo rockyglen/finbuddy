@@ -132,6 +132,18 @@ export default function AddExpenseForm() {
       <h1 className="text-3xl font-bold mb-6 text-center">Add New Expense</h1>
       {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
 
+      <div className="flex justify-center mb-6">
+        <button
+          type="button"
+          onClick={() => {
+            window.location.href = "/upload-only"; // Or use navigation hook
+          }}
+          className="text-sm text-indigo-600 hover:text-indigo-800 underline"
+        >
+          Just want to upload a receipt?
+        </button>
+      </div>
+
       <form
         onSubmit={handleSubmit}
         className="space-y-6 bg-white dark:bg-gray-900 p-6 rounded-xl shadow"
