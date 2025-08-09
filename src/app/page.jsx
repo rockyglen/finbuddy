@@ -159,31 +159,32 @@ export default function HomePage() {
         </motion.div>
       </section>
 
-      {/* Sign-up Unlock Section */}
-      <section className="bg-gradient-to-br from-indigo-50 to-purple-100 dark:from-gray-800 dark:to-gray-900 py-20 px-6 text-center">
-        <h2 className="text-3xl sm:text-4xl font-bold mb-6">
-          Unlock the Full Experience
-        </h2>
-        <p className="text-gray-700 dark:text-gray-300 max-w-xl mx-auto mb-10">
-          Create your free account and access features that take your finance
-          game to the next level.
-        </p>
-        <ul className="text-left max-w-md mx-auto mb-10 space-y-4 text-gray-700 dark:text-gray-300">
-          <li>✔ Unlimited receipt uploads</li>
-          <li>✔ AI-powered spending breakdowns</li>
-          <li>✔ Custom budgeting tools</li>
-          <li>✔ Private & secure data storage</li>
-          <li>✔ Early access to new features</li>
-        </ul>
-        <Link href="/sign-up">
-          <Button
-            size="lg"
-            className="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-4 text-lg font-semibold"
-          >
-            Sign Up Free
-          </Button>
-        </Link>
-      </section>
+      {user ? null : (
+        <section className="bg-gradient-to-br from-indigo-50 to-purple-100 dark:from-gray-800 dark:to-gray-900 py-20 px-6 text-center">
+          <h2 className="text-3xl sm:text-4xl font-bold mb-6">
+            Unlock the Full Experience
+          </h2>
+          <p className="text-gray-700 dark:text-gray-300 max-w-xl mx-auto mb-10">
+            Create your free account and access features that take your finance
+            game to the next level.
+          </p>
+          <ul className="text-left max-w-md mx-auto mb-10 space-y-4 text-gray-700 dark:text-gray-300">
+            <li>✔ Unlimited receipt uploads</li>
+            <li>✔ AI-powered spending breakdowns</li>
+            <li>✔ Custom budgeting tools</li>
+            <li>✔ Private & secure data storage</li>
+            <li>✔ Early access to new features</li>
+          </ul>
+          <Link href="/sign-up">
+            <Button
+              size="lg"
+              className="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-4 text-lg font-semibold"
+            >
+              Sign Up Free
+            </Button>
+          </Link>
+        </section>
+      )}
 
       {/* Testimonials */}
       <section className="bg-gray-100 dark:bg-gray-800 py-20 px-6">
