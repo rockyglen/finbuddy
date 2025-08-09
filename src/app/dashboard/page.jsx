@@ -480,7 +480,9 @@ export default function Dashboard() {
               </div>
             </div>
 
-            {smartSummary ? (
+            {loadingSummaryFromSWR || loadingSummaryManually ? (
+              <LoaderSpinner className="mx-auto" />
+            ) : smartSummary ? (
               <div className="prose dark:prose-invert max-w-none">
                 <ReactMarkdown>{smartSummary}</ReactMarkdown>
               </div>
