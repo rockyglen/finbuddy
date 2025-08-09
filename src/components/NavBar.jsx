@@ -64,8 +64,6 @@ export default function NavBar() {
             </span>
           </Link>
 
-          <DarkModeToggle />
-
           {!user ? (
             <>
               <Link href="/sign-in">

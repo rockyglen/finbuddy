@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import ReceiptUpload from "@/components/ReceiptUpload";
 import { supabase } from "@/lib/supabaseClient";
@@ -34,7 +34,7 @@ export default function AddExpenseForm() {
 
   const userId = session?.user?.id;
 
-  // ✅ Auth check logic
+  // Auth check
   useEffect(() => {
     if (session === null) return;
     if (!session?.user) router.push("/sign-in");
@@ -53,7 +53,6 @@ export default function AddExpenseForm() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
-    console.log("🚀 Form submitted");
 
     try {
       let receiptUrl = null;
@@ -72,7 +71,6 @@ export default function AddExpenseForm() {
           });
 
         if (uploadError) {
-          console.error("Upload failed:", uploadError);
           setError("Receipt upload failed.");
           return;
         }
@@ -83,16 +81,13 @@ export default function AddExpenseForm() {
             .createSignedUrl(filePath, 60 * 60);
 
         if (signedUrlError) {
-          console.error("Signed URL generation failed:", signedUrlError);
           setError("Could not generate access URL.");
           return;
         }
 
         receiptUrl = signedUrlData?.signedUrl;
-        console.log("🧾 Signed Receipt URL:", receiptUrl);
       }
 
-      // ✅ Required check moved here
       if (!amount || !category || !date) {
         setError("Please fill in all required fields.");
         return;
@@ -110,34 +105,40 @@ export default function AddExpenseForm() {
       ]);
 
       if (dbError) {
-        console.error("Database insert failed:", dbError);
         setError("Saving to database failed.");
         return;
       }
 
-      console.log("✅ Expense saved successfully!");
       router.push("/dashboard");
     } catch (err) {
-      console.error("Unexpected error:", err);
       setError("Something went wrong.");
     }
   };
 
   return (
     <motion.div
-      className="max-w-xl mx-auto px-4 py-12"
+      className="max-w-2xl mx-auto px-6 py-12"
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
     >
-      <h1 className="text-3xl font-bold mb-6 text-center">Add New Expense</h1>
-      {error && <p className="text-red-500 mb-4 text-center">{error}</p>}
+      <h1 className="text-4xl font-bold mb-8 text-center text-gray-900 dark:text-white">
+        Add New Expense
+      </h1>
+
+      {error && (
+        <motion.div
+          className="mb-6 p-4 bg-red-100 border border-red-300 text-red-700 rounded-lg text-center"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+        >
+          {error}
+        </motion.div>
+      )}
 
       <div className="flex justify-center mb-6">
         <button
           type="button"
-          onClick={() => {
-            window.location.href = "/upload-only"; // Or use navigation hook
-          }}
+          onClick={() => router.push("/upload-only")}
           className="text-sm text-indigo-600 hover:text-indigo-800 underline"
         >
           Just want to upload a receipt?
@@ -146,11 +147,11 @@ export default function AddExpenseForm() {
 
       <form
         onSubmit={handleSubmit}
-        className="space-y-6 bg-white dark:bg-gray-900 p-6 rounded-xl shadow"
+        className="space-y-6 bg-white dark:bg-gray-900 p-8 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-800"
       >
         {/* Amount */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
             Amount ($)
           </label>
           <input
@@ -159,23 +160,23 @@ export default function AddExpenseForm() {
             min="0"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="w-full px-4 py-2 mt-1 border rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-white border-gray-300 dark:border-gray-700"
+            className="w-full px-4 py-2 border rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-white border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
             required
           />
         </div>
 
         {/* Category */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
             Category
           </label>
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="w-full px-4 py-2 mt-1 border rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-white border-gray-300 dark:border-gray-700"
+            className="w-full px-4 py-2 border rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-white border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
             required
           >
-            <option value="">Select</option>
+            <option value="">Select a category</option>
             {categories.map((cat) => (
               <option key={cat}>{cat}</option>
             ))}
@@ -184,29 +185,29 @@ export default function AddExpenseForm() {
 
         {/* Date */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
             Date
           </label>
           <input
             type="date"
             value={date}
             onChange={(e) => setDate(e.target.value)}
-            className="w-full px-4 py-2 mt-1 border rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-white border-gray-300 dark:border-gray-700"
+            className="w-full px-4 py-2 border rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-white border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
             required
           />
         </div>
 
         {/* Description */}
         <div>
-          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300">
+          <label className="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
             Description
           </label>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
             rows={3}
-            className="w-full px-4 py-2 mt-1 border rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-white border-gray-300 dark:border-gray-700"
-            placeholder="Extensive description of the expense..."
+            className="w-full px-4 py-2 border rounded-lg bg-gray-50 dark:bg-gray-800 dark:text-white border-gray-300 dark:border-gray-700 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none resize-none"
+            placeholder="Add details about this expense..."
           />
         </div>
 
@@ -218,37 +219,48 @@ export default function AddExpenseForm() {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
-            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-              Receipt Preview:
+            <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
+              Receipt Preview
             </p>
             <img
               src={previewUrl}
               alt="Preview"
-              className="w-full max-h-[500px] object-contain rounded-lg shadow-lg border dark:border-gray-700"
+              className="w-full max-h-[500px] object-contain rounded-lg shadow-md border dark:border-gray-700 cursor-pointer hover:scale-[1.02] transition-transform"
               onClick={() => setShowModal(true)}
             />
           </motion.div>
         )}
 
-        {showModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center">
-            <img
-              src={previewUrl}
-              alt="Full Receipt"
-              className="max-w-full max-h-full rounded-lg shadow-lg"
-            />
-            <button
-              onClick={() => setShowModal(false)}
-              className="absolute top-4 right-4 text-white text-2xl font-bold hover:text-red-400"
+        {/* Modal */}
+        <AnimatePresence>
+          {showModal && (
+            <motion.div
+              className="fixed inset-0 bg-black bg-opacity-80 z-50 flex items-center justify-center"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
             >
-              ×
-            </button>
-          </div>
-        )}
+              <motion.img
+                src={previewUrl}
+                alt="Full Receipt"
+                className="max-w-full max-h-full rounded-lg shadow-lg"
+                initial={{ scale: 0.9 }}
+                animate={{ scale: 1 }}
+                exit={{ scale: 0.9 }}
+              />
+              <button
+                onClick={() => setShowModal(false)}
+                className="absolute top-6 right-8 text-white text-3xl font-bold hover:text-red-400"
+              >
+                ×
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         <Button
           type="submit"
-          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white"
+          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-3 text-lg font-semibold rounded-lg transition-colors"
         >
           Save Expense
         </Button>
