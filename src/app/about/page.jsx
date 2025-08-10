@@ -3,6 +3,7 @@
 import { motion } from "framer-motion";
 import { FaBrain, FaTools, FaUserTie, FaGlobeAmericas } from "react-icons/fa";
 import Image from "next/image";
+import illustration from "../../illustration.svg";
 
 export default function AboutPage() {
   return (
@@ -65,7 +66,7 @@ export default function AboutPage() {
           className="flex justify-center"
         >
           <Image
-            src="/finance-illustration.svg"
+            src={illustration}
             alt="AI Finance Illustration"
             width={400}
             height={400}
