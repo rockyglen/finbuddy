@@ -96,7 +96,7 @@ export default function HomePage() {
       </section>
 
       {/* Features */}
-      <section className="py-20 px-6 bg-white dark:bg-gray-900">
+      <section id="features" className="py-20 px-6 bg-white dark:bg-gray-900">
         <div className="text-center mb-16">
           <motion.h2
             className="text-3xl sm:text-4xl font-bold mb-3"

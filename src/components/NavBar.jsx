@@ -64,6 +64,12 @@ export default function NavBar() {
             </span>
           </Link>
 
+          <Link href="/#features">
+            <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-gray-100 hover:bg-indigo-100 text-gray-700 hover:text-indigo-700 dark:bg-gray-800 dark:hover:bg-indigo-900 dark:text-gray-300 dark:hover:text-indigo-300 transition-all duration-200 shadow">
+              Features
+            </span>
+          </Link>
+
           {!user ? (
             <>
               <Link href="/sign-in">
