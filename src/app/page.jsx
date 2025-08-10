@@ -13,7 +13,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 
-// Animation Variants
+/* ---------- Animation Variants ---------- */
 const fadeUp = {
   hidden: { opacity: 0, y: 40 },
   visible: (i = 1) => ({
@@ -34,37 +34,46 @@ export default function HomePage() {
   const user = useUser();
 
   return (
-    <div className="min-h-screen flex flex-col">
-      {/* Hero */}
-      <section className="flex flex-col items-center justify-center text-center px-6 py-28 bg-gradient-to-br from-indigo-50 to-purple-100 dark:from-gray-900 dark:to-black relative overflow-hidden">
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-white to-gray-50 dark:from-gray-950 dark:to-gray-900">
+      {/* ---------- HERO ---------- */}
+      <section className="relative flex flex-col items-center justify-center px-6 py-28 text-center overflow-hidden">
+        {/* Background Mesh Gradient */}
+        <div className="absolute inset-0 -z-10">
+          <div className="absolute w-[140%] h-[140%] -top-1/4 -left-1/4 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-indigo-400/40 via-purple-400/20 to-transparent blur-3xl animate-pulse" />
+        </div>
+
+        {/* Headline */}
         <motion.h1
-          className="text-4xl sm:text-6xl font-extrabold mb-6 z-10 leading-tight"
+          className="text-balance text-4xl sm:text-6xl lg:text-7xl font-extrabold mb-6 leading-tight tracking-tight"
           initial={{ opacity: 0, y: -30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.7 }}
         >
           Stop Guessing Your Finances.
-          <span className="text-indigo-600 dark:text-indigo-400">
+          <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-600 to-purple-500 dark:from-indigo-400 dark:to-purple-300">
             {" "}
             Take Control.
           </span>
         </motion.h1>
+
+        {/* Subtext */}
         <motion.p
-          className="text-lg sm:text-xl text-gray-700 dark:text-gray-300 max-w-2xl mb-8 z-10"
+          className="text-lg sm:text-xl max-w-2xl mb-10 text-gray-600 dark:text-gray-300 leading-relaxed"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.2, duration: 0.6 }}
         >
           Snap a receipt. AI organizes, analyzes, and tells you
-          <span className="font-semibold">
+          <span className="font-semibold text-gray-900 dark:text-white">
             {" "}
             exactly where your money is going
           </span>{" "}
           — instantly.
         </motion.p>
 
+        {/* CTA */}
         <motion.div
-          className="flex flex-wrap gap-4 justify-center z-10"
+          className="flex flex-wrap gap-4 justify-center"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.4, duration: 0.5 }}
@@ -72,12 +81,19 @@ export default function HomePage() {
           {user ? (
             <>
               <Link href="/dashboard">
-                <Button size="lg" className="px-8">
+                <Button
+                  size="lg"
+                  className="px-8 font-medium rounded-full shadow-lg hover:shadow-xl transition-shadow"
+                >
                   Go to Dashboard
                 </Button>
               </Link>
               <Link href="/upload-only">
-                <Button size="lg" variant="outline" className="px-8">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="px-8 font-medium rounded-full border-gray-300 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800"
+                >
                   Upload Receipt
                 </Button>
               </Link>
@@ -86,7 +102,7 @@ export default function HomePage() {
             <Link href="/sign-up">
               <Button
                 size="lg"
-                className="px-8 bg-indigo-600 hover:bg-indigo-700 text-white"
+                className="px-8 font-semibold rounded-full bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white shadow-lg hover:shadow-xl transition-all"
               >
                 Get Started Free
               </Button>
@@ -95,11 +111,11 @@ export default function HomePage() {
         </motion.div>
       </section>
 
-      {/* Features */}
-      <section id="features" className="py-20 px-6 bg-white dark:bg-gray-900">
+      {/* ---------- FEATURES ---------- */}
+      <section id="features" className="py-20 px-6">
         <div className="text-center mb-16">
           <motion.h2
-            className="text-3xl sm:text-4xl font-bold mb-3"
+            className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 tracking-tight"
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
@@ -108,7 +124,7 @@ export default function HomePage() {
             Finally, a Finance Tool That Works for You
           </motion.h2>
           <motion.p
-            className="text-gray-600 dark:text-gray-400 max-w-xl mx-auto"
+            className="text-gray-600 dark:text-gray-400 max-w-xl mx-auto text-lg"
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
@@ -159,35 +175,40 @@ export default function HomePage() {
         </motion.div>
       </section>
 
-      {user ? null : (
-        <section className="bg-gradient-to-br from-indigo-50 to-purple-100 dark:from-gray-800 dark:to-gray-900 py-20 px-6 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold mb-6">
-            Unlock the Full Experience
-          </h2>
-          <p className="text-gray-700 dark:text-gray-300 max-w-xl mx-auto mb-10">
-            Create your free account and access features that take your finance
-            game to the next level.
-          </p>
-          <ul className="text-left max-w-md mx-auto mb-10 space-y-4 text-gray-700 dark:text-gray-300">
-            <li>✔ Unlimited receipt uploads</li>
-            <li>✔ AI-powered spending breakdowns</li>
-            <li>✔ Custom budgeting tools</li>
-            <li>✔ Private & secure data storage</li>
-            <li>✔ Early access to new features</li>
-          </ul>
-          <Link href="/sign-up">
-            <Button
-              size="lg"
-              className="bg-indigo-600 hover:bg-indigo-700 text-white px-10 py-4 text-lg font-semibold"
-            >
-              Sign Up Free
-            </Button>
-          </Link>
+      {/* ---------- SIGN-UP CTA ---------- */}
+      {!user && (
+        <section className="relative py-20 px-6 text-center mx-4 mb-20 rounded-3xl overflow-hidden">
+          {/* Glass Background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-indigo-100/60 to-purple-100/60 dark:from-gray-800/80 dark:to-gray-900/80 backdrop-blur-md border border-white/20" />
+          <div className="relative">
+            <h2 className="text-3xl sm:text-4xl font-bold mb-6 tracking-tight">
+              Unlock the Full Experience
+            </h2>
+            <p className="text-gray-700 dark:text-gray-300 max-w-xl mx-auto mb-10">
+              Create your free account and access features that take your
+              finance game to the next level.
+            </p>
+            <ul className="text-left max-w-md mx-auto mb-10 space-y-4 text-gray-700 dark:text-gray-300 leading-relaxed">
+              <li>✔ Unlimited receipt uploads</li>
+              <li>✔ AI-powered spending breakdowns</li>
+              <li>✔ Custom budgeting tools</li>
+              <li>✔ Private & secure data storage</li>
+              <li>✔ Early access to new features</li>
+            </ul>
+            <Link href="/sign-up">
+              <Button
+                size="lg"
+                className="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-10 py-4 text-lg font-semibold rounded-full shadow-lg hover:shadow-xl transition-all"
+              >
+                Sign Up Free
+              </Button>
+            </Link>
+          </div>
         </section>
       )}
 
-      {/* Testimonials */}
-      <section className="bg-gray-100 dark:bg-gray-800 py-20 px-6">
+      {/* ---------- TESTIMONIALS ---------- */}
+      <section className="bg-gray-100 dark:bg-gray-900 py-20 px-6">
         <div className="text-center mb-16">
           <motion.h2
             className="text-3xl sm:text-4xl font-bold mb-3"
@@ -199,7 +220,7 @@ export default function HomePage() {
             What Our Users Are Saying
           </motion.h2>
           <motion.p
-            className="text-gray-600 dark:text-gray-400"
+            className="text-gray-600 dark:text-gray-400 text-lg"
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
@@ -235,10 +256,10 @@ export default function HomePage() {
         </motion.div>
       </section>
 
-      {/* Final CTA */}
-      <section className="bg-indigo-600 text-white dark:bg-indigo-700 text-center px-6 py-24">
+      {/* ---------- FINAL CTA ---------- */}
+      <section className="bg-gradient-to-r from-indigo-600 to-purple-600 text-white text-center px-6 py-24 rounded-t-3xl">
         <motion.h3
-          className="text-3xl sm:text-4xl font-bold mb-6"
+          className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-6 tracking-tight"
           initial={{ opacity: 0, scale: 0.95 }}
           whileInView={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5 }}
@@ -247,7 +268,7 @@ export default function HomePage() {
           Master Your Money — Starting Today
         </motion.h3>
         <motion.p
-          className="mb-8 text-lg max-w-2xl mx-auto"
+          className="mb-8 text-lg max-w-2xl mx-auto opacity-90"
           initial={{ opacity: 0, y: 15 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
@@ -266,7 +287,7 @@ export default function HomePage() {
               <Button
                 variant="outline"
                 size="lg"
-                className="text-white border-white hover:bg-white hover:text-indigo-600 px-8"
+                className="text-white border-white hover:bg-white hover:text-indigo-700 px-8 font-semibold rounded-full"
               >
                 Go to Dashboard
               </Button>
@@ -281,7 +302,7 @@ export default function HomePage() {
             <Link href="/sign-up">
               <Button
                 size="lg"
-                className="bg-white text-indigo-600 hover:bg-gray-100 px-8 font-semibold"
+                className="bg-white text-indigo-700 hover:bg-gray-100 px-8 font-semibold rounded-full"
               >
                 Sign Up Free
               </Button>
@@ -293,32 +314,38 @@ export default function HomePage() {
   );
 }
 
+/* ---------- Feature Card ---------- */
 function Feature({ icon, title, desc }) {
   return (
     <motion.div
-      className="flex items-start space-x-5"
+      className="flex items-start space-x-5 p-6 rounded-2xl bg-white/70 dark:bg-gray-800/70 backdrop-blur-sm border border-gray-200 dark:border-gray-700 hover:shadow-xl hover:scale-[1.02] transition-all duration-300"
       variants={fadeUp}
       viewport={{ once: true }}
     >
-      <div className="p-4 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 text-lg">
+      <div className="p-4 rounded-full bg-indigo-100 dark:bg-indigo-900 text-indigo-600 dark:text-indigo-300 text-lg shadow-sm">
         {icon}
       </div>
       <div>
         <h3 className="text-lg font-semibold mb-1">{title}</h3>
-        <p className="text-gray-600 dark:text-gray-400">{desc}</p>
+        <p className="text-gray-600 dark:text-gray-400 leading-relaxed">
+          {desc}
+        </p>
       </div>
     </motion.div>
   );
 }
 
+/* ---------- Testimonial Card ---------- */
 function Testimonial({ name, text }) {
   return (
     <motion.div
-      className="bg-white dark:bg-gray-700 p-6 rounded-lg shadow-md flex flex-col justify-between"
+      className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700 hover:shadow-xl transition-all backdrop-blur-sm"
       variants={fadeUp}
       viewport={{ once: true }}
     >
-      <p className="italic text-gray-700 dark:text-gray-300 mb-4">"{text}"</p>
+      <p className="italic text-gray-700 dark:text-gray-300 mb-4 leading-relaxed">
+        "{text}"
+      </p>
       <p className="text-right font-semibold text-gray-900 dark:text-white">
         — {name}
       </p>
