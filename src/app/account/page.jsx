@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createClient } from "@/utils/supabase/client";
+import { supabase } from "@/lib/supabaseClient";
 
 export default function AccountPage() {
-  const supabase = createClient();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
   const [displayName, setDisplayName] = useState("");
