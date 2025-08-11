@@ -1,12 +1,13 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/lib/supabaseClient"; // adjust import if needed
 
 export default function VerifyEmailPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const resendConfirmation = async () => {
     const userEmail = localStorage.getItem("pending_email");
@@ -29,17 +30,30 @@ export default function VerifyEmailPage() {
   };
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      // Optionally, prompt users to sign in if they have already verified
+    const token = searchParams.get("token_hash");
+    const type = searchParams.get("type");
+
+    // If the email confirmation link was clicked
+    if (token && type === "signup") {
+      supabase.auth
+        .verifyOtp({ token_hash: token, type: "signup" })
+        .then(({ data, error }) => {
+          if (error) {
+            console.error("Verification error:", error);
+          } else {
+            // Session is now active, redirect to dashboard
+            router.replace("/dashboard");
+          }
+        });
+    } else {
+      // Fallback: check if already signed in
       supabase.auth.getSession().then(({ data }) => {
         if (data.session) {
-          router.push("/dashboard");
+          router.replace("/dashboard");
         }
       });
-    }, 3000);
-
-    return () => clearTimeout(timer);
-  }, []);
+    }
+  }, [router, searchParams]);
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4 text-center">
