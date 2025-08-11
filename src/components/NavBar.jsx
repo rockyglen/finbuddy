@@ -70,6 +70,14 @@ export default function NavBar() {
             </Link>
           )}
 
+          {user && (
+            <Link href="/account">
+              <span className="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-indigo-600 hover:bg-indigo-700 text-white transition-all duration-200 shadow">
+                Account Settings
+              </span>
+            </Link>
+          )}
+
           {!user ? (
             <>
               <Link href="/sign-in">
