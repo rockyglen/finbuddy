@@ -1,12 +1,10 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createClient } from "@/utils/supabase/client";
+import { supabase } from "@/lib/supabaseClient";
 import { motion } from "framer-motion";
 
 export default function AccountSettingsPage() {
-  const supabase = createClient();
-
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [displayName, setDisplayName] = useState("");
