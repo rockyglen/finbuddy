@@ -114,7 +114,7 @@ export async function POST(req) {
       .update({
         amount: parsedJson.amount,
         category: parsedJson.category,
-        date: parsedJson.date,
+
         description: parsedJson.description || null,
         ocr_text: ocrText,
         ocr_parsed: parsedJson,

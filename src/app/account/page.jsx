@@ -2,14 +2,13 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
-import { motion } from "framer-motion";
+import LoaderSpinner from "@/components/ui/LoaderSpinner";
 
-export default function AccountSettingsPage() {
+export default function AccountPage() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState(null);
   const [displayName, setDisplayName] = useState("");
-  const [editingName, setEditingName] = useState(false);
-  const [activeTab, setActiveTab] = useState("profile");
+  const [editing, setEditing] = useState(false);
 
   useEffect(() => {
     fetchUser();
@@ -38,26 +37,14 @@ export default function AccountSettingsPage() {
 
   async function saveDisplayName() {
     if (!user) return;
-    const { error } = await supabase
+    await supabase
       .from("profiles")
       .upsert({ id: user.id, display_name: displayName });
-    if (!error) setEditingName(false);
-  }
-
-  async function resetPassword() {
-    const { error } = await supabase.auth.resetPasswordForEmail(user.email);
-    if (!error) {
-      alert("Password reset email sent.");
-    }
-  }
-
-  async function signOut() {
-    await supabase.auth.signOut();
-    window.location.href = "/";
+    setEditing(false);
   }
 
   async function deleteAccount() {
-    if (!confirm("⚠️ This will permanently delete your account. Continue?"))
+    if (!confirm("This will permanently delete your account. Continue?"))
       return;
     await fetch("/api/delete-user", { method: "POST" });
     await supabase.auth.signOut();
@@ -66,19 +53,21 @@ export default function AccountSettingsPage() {
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center min-h-[60vh] text-gray-500">
-        <span className="animate-pulse">Loading account...</span>
+      <div className="flex justify-center items-center min-h-screen text-gray-500 dark:text-gray-400">
+        <LoaderSpinner />
       </div>
     );
   }
 
   if (!user) {
     return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
-        <p className="mb-4 text-gray-600">You are not signed in.</p>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-white dark:bg-black transition-colors">
+        <p className="mb-4 text-gray-500 dark:text-gray-400">
+          You are not signed in.
+        </p>
         <a
           href="/sign-in"
-          className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold shadow"
+          className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 transition"
         >
           Sign In
         </a>
@@ -86,132 +75,77 @@ export default function AccountSettingsPage() {
     );
   }
 
-  const tabs = [
-    { key: "profile", label: "Profile" },
-    { key: "security", label: "Security" },
-    { key: "danger", label: "Danger Zone" },
-  ];
-
   return (
-    <motion.div
-      className="max-w-3xl mx-auto mt-12 p-6 bg-white shadow-lg rounded-2xl border border-gray-100"
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      <h1 className="text-3xl font-bold mb-6 text-gray-800">
-        Account Settings
-      </h1>
+    <div className="min-h-screen bg-gray-50 dark:bg-black py-12 transition-colors">
+      <div className="max-w-md mx-auto bg-white dark:bg-black rounded-2xl shadow-lg p-8 space-y-8 border border-gray-100 dark:border-gray-800">
+        <h1 className="text-2xl font-semibold text-gray-900 dark:text-white">
+          Account Settings
+        </h1>
 
-      {/* Tab Navigation */}
-      <div className="flex space-x-6 border-b border-gray-200 mb-6">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`pb-2 text-sm font-medium ${
-              activeTab === tab.key
-                ? "text-blue-600 border-b-2 border-blue-600"
-                : "text-gray-500 hover:text-gray-700"
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Profile Tab */}
-      {activeTab === "profile" && (
+        {/* Email */}
         <div>
-          {/* Email */}
-          <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-500 mb-2">
-              Email Address
-            </label>
-            <input
-              type="text"
-              value={user.email}
-              disabled
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 bg-gray-50 text-gray-700 font-medium cursor-not-allowed"
-            />
-          </div>
-
-          {/* Display Name */}
-          <div>
-            <label className="block text-sm font-medium text-gray-500 mb-2">
-              Display Name
-            </label>
-            {editingName ? (
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={displayName}
-                  onChange={(e) => setDisplayName(e.target.value)}
-                  className="flex-1 border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button
-                  onClick={saveDisplayName}
-                  className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition"
-                >
-                  Save
-                </button>
-                <button
-                  onClick={() => setEditingName(false)}
-                  className="px-4 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition"
-                >
-                  Cancel
-                </button>
-              </div>
-            ) : (
-              <div className="flex justify-between items-center border border-gray-200 rounded-lg px-3 py-2">
-                <span className="text-gray-700 font-medium">
-                  {displayName || "No name set"}
-                </span>
-                <button
-                  onClick={() => setEditingName(true)}
-                  className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                >
-                  Edit
-                </button>
-              </div>
-            )}
-          </div>
+          <label className="block text-sm text-gray-500 dark:text-gray-400 mb-1">
+            Email
+          </label>
+          <input
+            type="text"
+            value={user.email}
+            disabled
+            className="w-full px-3 py-2 bg-gray-100 dark:bg-neutral-900 text-gray-700 dark:text-gray-200 rounded-lg border border-gray-200 dark:border-gray-700 cursor-not-allowed"
+          />
         </div>
-      )}
 
-      {/* Security Tab */}
-      {activeTab === "security" && (
-        <div className="space-y-4">
-          <button
-            onClick={resetPassword}
-            className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg font-medium shadow"
-          >
-            Reset Password
-          </button>
-          <button
-            onClick={signOut}
-            className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg font-medium shadow"
-          >
-            Sign Out
-          </button>
-        </div>
-      )}
-
-      {/* Danger Zone Tab */}
-      {activeTab === "danger" && (
+        {/* Display Name */}
         <div>
-          <p className="text-sm text-gray-600 mb-4">
-            Deleting your account is irreversible. All your data will be
-            permanently removed.
-          </p>
+          <label className="block text-sm text-gray-500 dark:text-gray-400 mb-1">
+            Display Name
+          </label>
+          {editing ? (
+            <div className="flex gap-2">
+              <input
+                type="text"
+                value={displayName}
+                onChange={(e) => setDisplayName(e.target.value)}
+                className="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-black dark:focus:ring-white bg-white dark:bg-neutral-900 text-gray-900 dark:text-gray-100"
+              />
+              <button
+                onClick={saveDisplayName}
+                className="px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 dark:bg-white dark:text-black dark:hover:bg-gray-200 transition"
+              >
+                Save
+              </button>
+              <button
+                onClick={() => setEditing(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 dark:bg-neutral-800 dark:text-gray-200 dark:hover:bg-neutral-700 transition"
+              >
+                Cancel
+              </button>
+            </div>
+          ) : (
+            <div className="flex justify-between items-center">
+              <span className="text-gray-700 dark:text-gray-200">
+                {displayName || "No name set"}
+              </span>
+              <button
+                onClick={() => setEditing(true)}
+                className="text-sm font-medium text-gray-500 hover:text-black dark:text-gray-400 dark:hover:text-white"
+              >
+                Edit
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Delete Account */}
+        <div className="pt-4 border-t border-gray-100 dark:border-gray-800">
           <button
             onClick={deleteAccount}
-            className="w-full px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg font-semibold shadow transition"
+            className="w-full px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition"
           >
             Delete Account
           </button>
         </div>
-      )}
-    </motion.div>
+      </div>
+    </div>
   );
 }

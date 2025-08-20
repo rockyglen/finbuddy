@@ -65,7 +65,7 @@ Your goals:
 2. Highlight category-wise trends (e.g. increasing Food costs)
 3. Mention any unusual or one-time large expenses
 4. Estimate their **average monthly** (or weekly, if <30 days) spending
-5. Offer 2–3 actionable budgeting suggestions to help them save money
+5. Offer 2-3 actionable budgeting suggestions to help them save money
 6. If the data covers less than a month, note that it’s early to draw strong conclusions
 7. What are the top 3 categories they spend on?
 8. What is their largest single expense?
@@ -74,13 +74,13 @@ Your goals:
 11. How can they optimize their spending in the top category?
 
 Respond in a clear way and most legible way, as if you were explaining to a friend. Use simple language and avoid jargon.
-Include as many emojis as possible to make it fun and engaging. 
+Make it look really nice with emoticons and emojis to make it engaging.
 
 DO NOT GIVE ME ANY SCRIPTS OR CODE. 
 
-EXPLAIN UNDER 250 WORDS.
+EXPLAIN UNDER 100 WORDS.
 
-GIVE ME IN BULLET POINTS. WHERE I AM SPENDING MONEY AND HOW I CAN SAVE MONEY.
+
 
 THIS RESPONSE WILL BE SHOWN TO THE USER IN A WEB APP.
 IF NEEDED, SEARCH THE WEB FOR THE LATEST TRENDS IN PERSONAL FINANCE.

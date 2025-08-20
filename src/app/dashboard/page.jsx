@@ -83,6 +83,7 @@ export default function Dashboard() {
   const [search, setSearch] = useState("");
   const [loadingSummaryManually, setLoadingSummaryManually] = useState(false);
   const [smartSummary, setSmartSummary] = useState(null);
+  const [summaryUpdatedAt, setSummaryUpdatedAt] = useState(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data, error }) => {
@@ -104,7 +105,26 @@ export default function Dashboard() {
   );
 
   useEffect(() => {
-    if (summaryData !== undefined) setSmartSummary(summaryData);
+    if (summaryData === undefined) return; // still loading or no fetch
+
+    console.log("SWR summaryData:", summaryData);
+
+    if (!summaryData) {
+      setSmartSummary(null);
+      setSummaryUpdatedAt(null);
+      return;
+    }
+
+    if (typeof summaryData === "string") {
+      // legacy string-only response
+      setSmartSummary(summaryData);
+      setSummaryUpdatedAt(null);
+      return;
+    }
+
+    // Expected shape: { summary, updated_at }
+    setSmartSummary(summaryData.summary ?? null);
+    setSummaryUpdatedAt(summaryData.updated_at ?? null);
   }, [summaryData]);
 
   useEffect(() => {
@@ -128,19 +148,32 @@ export default function Dashboard() {
     setLoadingSummaryManually(true);
     try {
       const { data: sessionData } = await supabase.auth.getSession();
+
       const res = await fetch("/api/summary-insights", {
         method: "POST",
         headers: {
           Authorization: `Bearer ${sessionData.session.access_token}`,
+          "Content-Type": "application/json",
         },
       });
+
       const json = await res.json();
-      if (res.ok) setSmartSummary(json.summary);
-      else setSmartSummary(`⚠️ ${json.error}`);
-    } catch {
+      console.log("/api/summary-insights response:", res.status, json);
+
+      if (res.ok) {
+        setSmartSummary(json.summary ?? null);
+        setSummaryUpdatedAt(json.updated_at ?? null);
+      } else {
+        setSmartSummary(`⚠️ ${json.error || "Unknown error"}`);
+        setSummaryUpdatedAt(null);
+      }
+    } catch (err) {
+      console.error("fetchSmartSummary caught error:", err);
       setSmartSummary("⚠️ Failed to generate summary.");
+      setSummaryUpdatedAt(null);
+    } finally {
+      setLoadingSummaryManually(false);
     }
-    setLoadingSummaryManually(false);
   };
 
   const handleDelete = async (id) => {
@@ -476,7 +509,10 @@ export default function Dashboard() {
                 <Sparkles className="w-5 h-5 text-yellow-400" /> AI Insights
               </h3>
               <div className="text-sm text-gray-500">
-                Updated: {new Date().toLocaleDateString()}
+                Updated:{" "}
+                {summaryUpdatedAt
+                  ? new Date(summaryUpdatedAt).toLocaleString()
+                  : "—"}
               </div>
             </div>
 
