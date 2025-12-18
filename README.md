@@ -1,36 +1,65 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
-## Getting Started
 
-First, run the development server:
+# 🤖 Project Vision
+**FinBuddy** is an enterprise-grade Finance SaaS designed to bridge the gap between messy, real-world physical data and structured financial intelligence. Unlike traditional trackers, FinBuddy utilizes an **asynchronous AI pipeline** to automate data entry and provide proactive coaching based on longitudinal spending patterns.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+# 🚀 Core AI Architecture & Data Engineering
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+### 1. The Multi-Stage Asynchronous Pipeline
+To solve the problem of high-latency AI inference, I architected a non-blocking worker system.
+* **Ingestion**: High-resolution receipt images are uploaded to **Supabase Storage**.
+* **OCR Orchestration**: The system triggers a background process using **OCR.space (Engine 2)** to extract raw text, optimized for tabular financial layouts.
+* **NLP Transformation**: Extracted text is fed into **GPT-4-1106-Preview**, acting as a semantic parser to identify line items, tax, and merchant metadata.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 2. Deterministic Intelligence & Safety Guardrails
+To eliminate the risk of "financial hallucinations," I implemented strict engineering constraints:
+* **Schema Enforcement**: The LLM is restricted to a specific JSON output format (Title, Amount, Category, Date, Vendor).
+* **Zero-Temperature Policy**: By setting `temperature: 0`, I ensured that the extraction logic remains deterministic and reproducible across multiple sessions.
+* **System Prompt Persona**: Explicit system instructions define the LLM as a "Strict Data Extractor" that is prohibited from inventing or guessing missing fields.
 
-## Learn More
+### 3. Predictive Financial Analytics
+The "AI Coach" feature goes beyond simple math to perform high-level trend analysis.
+* **Contextual Benchmarking**: The analyst agent analyzes a minimum of 5 data points to identify anomalies or increasing costs in specific categories.
+* **Natural Language Generation (NLG)**: Generates human-readable spending summaries and actionable suggestions under a 100-word limit for rapid user consumption.
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# 🛠️ Comprehensive Tech Stack
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+| Layer | Technologies |
+|:---|:---|
+| **Frontend Core** | **Next.js 15.4.3**, **React 19.1.0** |
+| **AI Processing** | **OpenAI SDK (GPT-4)**, **Tesseract.js**, OCR.space API |
+| **Backend/DB** | **Supabase** (PostgreSQL, Realtime, Edge Functions) |
+| **Storage** | **Supabase Buckets** (Receipts) with **Signed URL Security** |
+| **State Layer** | **SWR** (Optimistic UI updates) |
+| **UX/Design** | **Tailwind CSS 4.1**, **Framer Motion 12.2**, **Radix UI** |
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+# 🧠 Key Engineering Challenges Overcome
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Problem: Handling High-Latency API Requests
+**Scenario**: OCR and LLM processing combined can take up to 8 seconds, causing standard serverless functions to timeout.  
+**Solution**: I implemented a **Background Worker Pattern**. The frontend creates a placeholder record and returns instantly. The backend then processes the data asynchronously, updating the UI via **SWR revalidation** once the AI task is complete.
+
+### Problem: Multi-Tenant Data Leakage
+**Scenario**: AI processing requires admin-level database access to update records, but this must never expose user data to other accounts.  
+**Solution**: Architected a **Secure Dual-Client Logic**. 
+* **Standard Client**: Restricted by **Row Level Security (RLS)** for all frontend actions.
+* **Admin Client**: Utilizes the `SUPABASE_SERVICE_ROLE_KEY` purely on the server, but only after verifying the user's JWT (JSON Web Token) to ensure the AI only processes data belonging to that specific UID.
+
+---
+
+# 📈 Deployment & Security
+* **Environment Hygiene**: Managed via `.env` variables for API keys and database secrets.
+* **User Lifecycle Management**: Automated cleanup protocols that delete physical receipt storage files immediately upon account termination to maintain GDPR-compliant data hygiene.
+
+---
+*FinBuddy represents a modern approach to AI-integrated SaaS, focusing on reliability, deterministic data handling, and elite user performance.*
+
+# Live Demo
+
+## Link for live demo: https://finbuddy-flame.vercel.app
