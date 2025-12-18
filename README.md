@@ -1,36 +1,53 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+---
+title: "FinBuddy: AI-Driven Financial Intelligence"
+author: "Glen Louis"
+date: "`r Sys.Date()`"
+output: github_document
+---
 
-## Getting Started
+# 🤖 Project Overview
 
-First, run the development server:
+**FinBuddy** is a sophisticated Finance SaaS platform designed to automate the transition from raw physical receipts to structured, actionable financial insights. By orchestrating a multi-stage pipeline involving **OCR** and **Large Language Models (LLMs)**, it eliminates manual data entry and provides users with a proactive "AI Financial Coach".
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## 🚀 Key AI & Engineering Features
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 1. Automated OCR Pipeline
+The system utilizes **OCR.space** to extract raw text from receipt images, which is then fed into a secondary processing layer.
+* **Implementation:** `api/ocr/full-process/route.js`.
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+### 2. Deterministic NLP Extraction
+Leverages **GPT-4-1106-Preview** as a strict data parser. 
+* **Prompt Engineering:** Uses advanced prompts with `temperature: 0` to convert unstructured text into a validated JSON schema (amount, category, vendor, date).
+* **Constraint Handling:** Explicitly instructs the model to avoid hallucinations and only extract explicitly stated data.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 3. Asynchronous Worker Architecture
+Implements a background worker pattern for long-running AI tasks.
+* **User Experience:** This architecture prevents blocking the main UI thread during the 3-6 second processing window.
 
-## Learn More
+### 4. Financial Insights Engine
+A custom analyst agent performs trend analysis on transaction history to generate personalized spending summaries.
+* **Data Requirements:** Requires a minimum of 5 expenses to ensure statistical relevance before generating advice.
 
-To learn more about Next.js, take a look at the following resources:
+## 🛠️ Technical Stack
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Category | Technology |
+|:---|:---|
+| **Framework** | Next.js 15 (App Router), React 19 |
+| **AI/ML** | OpenAI API (GPT-4), OCR.space API, Tesseract.js |
+| **Backend/Auth** | Supabase (Auth, PostgreSQL, Storage) |
+| **Styling** | Tailwind CSS 4, Shadcn/UI, Framer Motion |
+| **State** | SWR (Stale-While-Revalidate) |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🧠 Technical Challenges Overcome
 
-## Deploy on Vercel
+### Multi-Stage Data Validation
+Physical receipts often produce "noisy" OCR output. I engineered a **multi-pass validation logic** that cleans raw text before LLM ingestion and uses specific JSON-mode enforcement to prevent schema drift.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### Scalable Security Architecture
+Implemented a **dual-client Supabase architecture**. 
+* **Client-Side:** Restricted by Row Level Security (RLS).
+* **Server-Side:** High-privilege AI processing and account lifecycle management are handled by secured Admin clients.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+*This document was generated to showcase the engineering depth of the FinBuddy project.*
