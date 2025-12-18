@@ -1,12 +1,4 @@
----
-title: "FinBuddy: Advanced AI-Driven Financial Intelligence System"
-author: "Glen Louis"
-date: "`r Sys.Date()`"
-output: 
-  github_document:
-    toc: true
-    toc_depth: 3
----
+
 
 # 🤖 Project Vision
 **FinBuddy** is an enterprise-grade Finance SaaS designed to bridge the gap between messy, real-world physical data and structured financial intelligence. Unlike traditional trackers, FinBuddy utilizes an **asynchronous AI pipeline** to automate data entry and provide proactive coaching based on longitudinal spending patterns.
