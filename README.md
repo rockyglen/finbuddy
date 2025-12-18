@@ -59,3 +59,7 @@ The "AI Coach" feature goes beyond simple math to perform high-level trend analy
 
 ---
 *FinBuddy represents a modern approach to AI-integrated SaaS, focusing on reliability, deterministic data handling, and elite user performance.*
+
+# Live Demo
+
+## Link for live demo: https://finbuddy-flame.vercel.app
