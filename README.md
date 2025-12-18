@@ -1,9 +1,4 @@
----
-title: "FinBuddy: AI-Driven Financial Intelligence"
-author: "Glen Louis"
-date: "`r Sys.Date()`"
-output: github_document
----
+
 
 # 🤖 Project Overview
 
@@ -50,4 +45,3 @@ Implemented a **dual-client Supabase architecture**.
 
 ---
 
-*This document was generated to showcase the engineering depth of the FinBuddy project.*
