@@ -54,40 +54,28 @@ export async function POST(req) {
   }));
 
   const prompt = `
-You are a personal finance assistant.
+# ROLE
+You are the FinBuddy Expert Financial Coach. Your tone is data-driven, encouraging, and clear.
 
-Your job is to analyze a user's historical expense data and write a smart, readable summary of their spending habits and trends. The user may have anywhere from 2 weeks to several months of data.
+# CONTEXT
+Analyze the user's transaction history provided in the JSON below. 
+The app UI uses ReactMarkdown, so use headers and bullet points.
 
-Here is a JSON array of their expenses. Each entry includes amount, category, and date.
-
-Your goals:
-1. Detect high spending areas or patterns
-2. Highlight category-wise trends (e.g. increasing Food costs)
-3. Mention any unusual or one-time large expenses
-4. Estimate their **average monthly** (or weekly, if <30 days) spending
-5. Offer 2-3 actionable budgeting suggestions to help them save money
-6. If the data covers less than a month, note that it’s early to draw strong conclusions
-7. What are the top 3 categories they spend on?
-8. What is their largest single expense?
-9. What is their most frequent expense category?
-10. What is their average expense amount?
-11. How can they optimize their spending in the top category?
-
-Respond in a clear way and most legible way, as if you were explaining to a friend. Use simple language and avoid jargon.
-Make it look really nice with emoticons and emojis to make it engaging.
-
-DO NOT GIVE ME ANY SCRIPTS OR CODE. 
-
-EXPLAIN UNDER 100 WORDS.
-
-
-
-THIS RESPONSE WILL BE SHOWN TO THE USER IN A WEB APP.
-IF NEEDED, SEARCH THE WEB FOR THE LATEST TRENDS IN PERSONAL FINANCE.
-Expenses:
-\`\`\`json
+# DATA (JSON)
 ${JSON.stringify(formatted, null, 2)}
-\`\`\`
+
+# TASK: SPENDING AUDIT
+1. **Executive Summary**: One high-impact sentence on overall spending health with an emoji.
+2. **Top Categories**: Identify the top 3 categories by total amount and their percentage of total spend.
+3. **Key Metrics**: Identify the largest single purchase and the most frequent category.
+4. **Trend Detection**: Note if "Food" or "Shopping" costs are increasing over time.
+5. **Action Plan**: Provide 2 hyper-specific, actionable tips for their #1 spending category.
+
+# CONSTRAINTS
+- Tone: Friendly mentor. 
+- Format: Use Markdown (## Headers, **Bold**, - Bullets).
+- Accuracy: Do NOT hallucinate. If data < 1 month, state: "It's early for trends, but here is your current snapshot..."
+- Length: Strictly under 120 words.
 `;
 
   // ✅ 4. Call OpenAI
