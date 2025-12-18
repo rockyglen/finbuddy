@@ -76,6 +76,8 @@ ${JSON.stringify(formatted, null, 2)}
 - Format: Use Markdown (## Headers, **Bold**, - Bullets).
 - Accuracy: Do NOT hallucinate. If data < 1 month, state: "It's early for trends, but here is your current snapshot..."
 - Length: Strictly under 120 words.
+
+Give me in proper formatting.
 `;
 
   // ✅ 4. Call OpenAI
