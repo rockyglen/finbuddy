@@ -72,15 +72,20 @@ export default function NavBar() {
               </Button>
             </>
           ) : (
-            <Button
-              onClick={handleSignOut}
-              variant="outline"
-              disabled={signingOut}
-              className="flex items-center gap-2"
-            >
-              <FaSignOutAlt className="w-4 h-4" />
-              {signingOut ? "Signing Out..." : "Sign Out"}
-            </Button>
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Hi, {user.user_metadata?.full_name || user.user_metadata?.name || "User"}
+              </span>
+              <Button
+                onClick={handleSignOut}
+                variant="outline"
+                disabled={signingOut}
+                className="flex items-center gap-2"
+              >
+                <FaSignOutAlt className="w-4 h-4" />
+                {signingOut ? "Signing Out..." : "Sign Out"}
+              </Button>
+            </div>
           )}
         </div>
 

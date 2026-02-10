@@ -30,8 +30,9 @@ export default function AccountPage() {
       .eq("id", user.id)
       .single();
 
+    const providerName = user.user_metadata?.full_name || user.user_metadata?.name || "";
     setUser(user);
-    setDisplayName(data?.display_name || "");
+    setDisplayName(data?.display_name || providerName || "");
     setLoading(false);
   }
 
