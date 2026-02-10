@@ -46,12 +46,32 @@ export async function POST(req) {
     );
   }
 
-  // ✅ 3. Format data
+  // ✅ 3. Format data & Generate Hash
   const formatted = expenses.map((e) => ({
     category: e.category,
     amount: parseFloat(e.amount),
     date: e.date,
   }));
+
+  const dataString = JSON.stringify(formatted);
+  const crypto = require("crypto");
+  const inputHash = crypto.createHash("sha256").update(dataString).digest("hex");
+
+  // ✅ 4. Check Semantic Cache (Exact Match First)
+  const { data: cachedSummary, error: cacheError } = await supabase
+    .from("ai_summary_cache")
+    .select("summary_text")
+    .eq("user_id", user.id)
+    .eq("input_hash", inputHash)
+    .single();
+
+  if (cachedSummary) {
+    console.log("🚀 [Cache] Exact match found! Skipping OpenAI call.");
+    return Response.json({ summary: cachedSummary.summary_text, cached: true });
+  }
+
+  // ✅ 5. Optional: Semantic Similarity Match (Visualizing similarity)
+  // (In a full implementation, you'd call embeddings API here to find 'close enough' insights)
 
   const prompt = `
 # ROLE
@@ -61,7 +81,7 @@ You are the FinBuddy Senior Financial Analyst & Personal Coach. Your tone is enc
 Analyze the following expense history. Note that our UI uses ReactMarkdown, so utilize headers (##), bolding (**), and lists (-) for a professional dashboard look.
 
 USER DATA (JSON):
-${JSON.stringify(formatted, null, 2)}
+${dataString}
 
 # ANALYSIS OBJECTIVES
 1. **The Lead Story**: Start with a single high-impact sentence on overall spending health using a relevant emoji (e.g., 🚀 for saving, ⚠️ for high spend).
@@ -90,7 +110,7 @@ ${JSON.stringify(formatted, null, 2)}
 - [Tip 2]
 `;
 
-  // ✅ 4. Call OpenAI
+  // ✅ 6. Call OpenAI
   const openaiRes = await fetch("https://api.openai.com/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -117,22 +137,20 @@ ${JSON.stringify(formatted, null, 2)}
     );
   }
 
-  // ✅ 5. Store in ai_summary
-  const { error: upsertError } = await supabase.from("ai_summary").upsert(
-    [
+  // ✅ 7. Store in Cache & ai_summary
+  await Promise.all([
+    supabase.from("ai_summary_cache").upsert({
+      user_id: user.id,
+      input_hash: inputHash,
+      summary_text: summary,
+    }),
+    supabase.from("ai_summary").upsert([
       {
         user_id: user.id,
         summary_text: summary,
       },
-    ],
-    {
-      onConflict: "user_id", // crucial to avoid duplicates
-    }
-  );
+    ], { onConflict: "user_id" })
+  ]);
 
-  if (upsertError) {
-    return Response.json({ error: "Failed to save summary" }, { status: 500 });
-  }
-
-  return Response.json({ summary });
+  return Response.json({ summary, cached: false });
 }

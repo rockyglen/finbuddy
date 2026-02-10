@@ -32,57 +32,38 @@ export async function POST(req) {
     const receiptImageUrl = signedURLData.signedUrl;
     console.log("🔗 Signed URL generated:", receiptImageUrl);
 
-    // Step 2: OCR.space API
-    console.log("🔍 Sending image to OCR.space...");
-    const ocrRes = await fetch("https://api.ocr.space/parse/image", {
-      method: "POST",
-      headers: {
-        apikey: process.env.OCR_SPACE_API_KEY,
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-      body: new URLSearchParams({
-        url: receiptImageUrl,
-        language: "eng",
-      }),
-    });
-
-    const ocrJson = await ocrRes.json();
-    const ocrText = ocrJson?.ParsedResults?.[0]?.ParsedText;
-    console.log("📄 OCR Result:", ocrText?.slice(0, 200)); // limit log length
-
-    if (!ocrText) {
-      console.error("❌ No OCR text extracted:", ocrJson);
-      return Response.json(
-        { error: "Failed to extract text via OCR" },
-        { status: 500 }
-      );
-    }
-
-    // Step 3: Call OpenAI for parsing
+    // Step 2 & 3: GPT-4o Vision for extraction
     const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-    const prompt = `Extract expense details from this receipt OCR text:\n\n${ocrText}\n\nReturn a JSON like:\n{\n  "amount": number,\n  "category": string,\n  "date": "YYYY-MM-DD",\n  "description": string\n}
-    "Food",
-  "Transport",
-  "Shopping",
-  "Bills",
-  "Health",
-  "Travel",
-  "Other",
-
-  place the expense in any of these categories.
-
-  IF THERE ARE MULTIPLE AMOUNTS? JUST ADD THEM UP AND RETURN THE TOTAL.
-
-  also.. RETURN JUST THE RAW JSON, nothing else. No explanations, no text, just the JSON object.
-    
-    `;
-    console.log("🧠 Sending prompt to OpenAI...");
+    console.log("🧠 Sending image to GPT-4o Vision...");
 
     const chatRes = await openai.chat.completions.create({
-      model: "gpt-4-1106-preview",
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0.2,
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "user",
+          content: [
+            {
+              type: "text",
+              text: `Extract expense details from this receipt image. Return a JSON object with the following fields:
+              - amount (number, total sum of all items)
+              - category (one of: "Food", "Transport", "Shopping", "Bills", "Health", "Travel", "Other")
+              - date (YYYY-MM-DD)
+              - description (summary of items or merchant)
+              
+              ONLY return the raw JSON object. No markdown, no explanations.`,
+            },
+            {
+              type: "image_url",
+              image_url: {
+                url: receiptImageUrl,
+              },
+            },
+          ],
+        },
+      ],
+      response_format: { type: "json_object" },
+      temperature: 0,
     });
 
     const parsedContent = chatRes.choices?.[0]?.message?.content;
@@ -114,9 +95,7 @@ export async function POST(req) {
       .update({
         amount: parsedJson.amount,
         category: parsedJson.category,
-
         description: parsedJson.description || null,
-        ocr_text: ocrText,
         ocr_parsed: parsedJson,
       })
       .eq("id", expenseId);
