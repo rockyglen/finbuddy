@@ -50,6 +50,7 @@ export async function POST(req) {
               - category (one of: "Food", "Transport", "Shopping", "Bills", "Health", "Travel", "Other")
               - date (YYYY-MM-DD)
               - description (summary of items or merchant)
+              - items (array of objects with "name" and "price")
               
               ONLY return the raw JSON object. No markdown, no explanations.`,
             },
@@ -96,7 +97,7 @@ export async function POST(req) {
         amount: parsedJson.amount,
         category: parsedJson.category,
         description: parsedJson.description || null,
-        ocr_parsed: parsedJson,
+        ocr_parsed: parsedJson, // This now includes the 'items' array
       })
       .eq("id", expenseId);
 

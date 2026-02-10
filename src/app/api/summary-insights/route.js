@@ -51,6 +51,7 @@ export async function POST(req) {
     category: e.category,
     amount: parseFloat(e.amount),
     date: e.date,
+    items: e.ocr_parsed?.items || [],
   }));
 
   const dataString = JSON.stringify(formatted);

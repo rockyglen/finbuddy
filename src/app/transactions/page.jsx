@@ -47,7 +47,7 @@ export default function TransactionsPage() {
         (dateFilter ? tx.date === dateFilter : true) &&
         (search
           ? tx.description?.toLowerCase().includes(search.toLowerCase()) ||
-            tx.category?.toLowerCase().includes(search.toLowerCase())
+          tx.category?.toLowerCase().includes(search.toLowerCase())
           : true)
       );
     })
@@ -132,6 +132,19 @@ export default function TransactionsPage() {
                   <p className="text-sm italic text-gray-600 dark:text-gray-400">
                     {tx.description}
                   </p>
+                )}
+                {tx.ocr_parsed?.items && tx.ocr_parsed.items.length > 0 && (
+                  <div className="mt-2 space-y-1">
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Items:</p>
+                    <ul className="text-xs text-gray-600 dark:text-gray-300">
+                      {tx.ocr_parsed.items.map((item, i) => (
+                        <li key={i} className="flex justify-between max-w-xs">
+                          <span>• {item.name}</span>
+                          {item.price && <span className="text-gray-400">${Number(item.price).toFixed(2)}</span>}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 )}
               </div>
               <div className="text-right">
