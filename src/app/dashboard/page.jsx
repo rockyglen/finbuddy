@@ -198,7 +198,7 @@ export default function Dashboard() {
         headers: { Authorization: `Bearer ${sessionData.session.access_token}` },
       });
       const json = await res.json();
-      setSmartSwitch(json.suggestion);
+      setSmartSwitch(json);
     };
     fetchSwitch();
   }, [user, transactionsData]);
@@ -588,28 +588,49 @@ export default function Dashboard() {
         </motion.div>
 
         {/* Smart Switch Suggestion */}
-        {smartSwitch && (
+        {smartSwitch && smartSwitch.title && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="bg-indigo-600 rounded-3xl p-6 sm:p-8 text-white shadow-2xl relative overflow-hidden"
           >
-            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl" />
-            <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-6">
-              <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-md">
-                <Lightbulb className="w-8 h-8 text-white" />
-              </div>
-              <div className="flex-1">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-[10px] font-black bg-white text-indigo-600 px-2 py-0.5 rounded-full uppercase tracking-tighter">Smart Switch Insight</span>
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl transition-transform hover:scale-110 duration-1000" />
+
+            <div className="relative flex flex-col md:flex-row items-stretch md:items-center gap-8">
+              {/* Left Side: Icon & Status */}
+              <div className="flex items-center gap-6">
+                <div className="p-5 bg-white/20 rounded-2xl backdrop-blur-xl border border-white/20 shadow-inner">
+                  <Lightbulb className="w-8 h-8 text-white animate-pulse" />
                 </div>
-                <p className="text-xl sm:text-2xl font-bold tracking-tight leading-snug">
-                  {smartSwitch}
+                <div className="h-12 w-[1px] bg-white/20 hidden md:block" />
+              </div>
+
+              {/* Main Content */}
+              <div className="flex-1 space-y-2">
+                <div className="flex items-center gap-3">
+                  <span className="text-[10px] font-black bg-white text-indigo-600 px-2.5 py-1 rounded-full uppercase tracking-widest shadow-sm">
+                    AI Smart Switch
+                  </span>
+                  <span className="text-[10px] font-black bg-emerald-400 text-emerald-950 px-2.5 py-1 rounded-full uppercase tracking-widest shadow-sm">
+                    Saves {smartSwitch.savings || "Money"}
+                  </span>
+                </div>
+
+                <h3 className="text-2xl sm:text-3xl font-black tracking-tighter leading-tight drop-shadow-sm">
+                  {smartSwitch.title}
+                </h3>
+
+                <p className="text-indigo-100 text-sm sm:text-base font-medium leading-relaxed max-w-2xl opacity-90 italic">
+                  “{smartSwitch.rationale}”
                 </p>
               </div>
-              <Button className="bg-white text-indigo-600 hover:bg-indigo-50 font-bold px-8 py-6 rounded-2xl shadow-lg">
-                Applied
-              </Button>
+
+              {/* Action Button */}
+              <div className="flex items-center">
+                <Button className="w-full md:w-auto bg-white text-indigo-600 hover:bg-indigo-50 font-black px-10 py-7 rounded-2xl shadow-2xl transform transition-transform hover:scale-105 active:scale-95 text-lg">
+                  Applied
+                </Button>
+              </div>
             </div>
           </motion.div>
         )}

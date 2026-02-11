@@ -39,21 +39,15 @@ export async function POST(req) {
             return Response.json({ suggestion: "Add more transactions to unlock AI-powered Smart Switch insights!" });
         }
 
-        // 2. Ask GPT to find recurring patterns (items or manual bills/subs)
+        // 2. Ask GPT to find recurring patterns
         const systemPrompt = `
 You are a Financial Optimization Expert. Analyze the provided list of expenses.
-Some have granular line-items (receipts), others only have descriptions/categories (manual).
+Identify ONE high-impact savings opportunity (recurring items, subscriptions, or bills).
 
-Identify high-impact savings opportunities:
-1. Recurring items in receipts (e.g., buying the same coffee/snacks daily).
-2. Recurring manual expenses (e.g., subscriptions, regular bills).
-
-Provide ONE specific "Smart Switch" suggestion. 
-
-FORMAT:
-[Switch/Optimize] [Item/Service] for [Smarter Alternative/Bulk/Annual Plan]. 
-Rationale: [Brief explanation]. 
-Estimated savings: $[Amount] per [Year/Month].
+Return a JSON object with:
+- "title": A short action (e.g., "Bulk Buy Coffee", "Switch to Annual Disney+").
+- "rationale": One concise sentence explaining WHY.
+- "savings": A string like "$15/year" or "$5/month".
 
 USER DATA:
 ${JSON.stringify(dataForAI)}
@@ -62,10 +56,12 @@ ${JSON.stringify(dataForAI)}
         const response = await openai.chat.completions.create({
             model: "gpt-4o-mini",
             messages: [{ role: "system", content: systemPrompt }],
-            max_tokens: 150,
+            response_format: { type: "json_object" },
+            max_tokens: 200,
         });
 
-        return Response.json({ suggestion: response.choices[0].message.content });
+        const result = JSON.parse(response.choices[0].message.content);
+        return Response.json(result);
     } catch (err) {
         console.error(err);
         return Response.json({ error: "Failed to generate suggestions" }, { status: 500 });
