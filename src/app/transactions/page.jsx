@@ -123,7 +123,13 @@ export default function TransactionsPage() {
     }
   };
 
-  // Skip down to the isExpanded section in the render...
+  // Decide which list to show: Semantic vs Local Filter
+  const baseList = isSemantic ? semanticResults : (transactionsData || []);
+  const filtered = baseList
+    .filter((tx) => {
+      return categoryFilter ? tx.category === categoryFilter : true;
+    })
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
 
   const totalSpent = filtered.reduce((acc, tx) => acc + Number(tx.amount || 0), 0);
 

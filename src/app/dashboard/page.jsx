@@ -8,7 +8,12 @@ import { getExpenses, getSmartSummary } from "@/lib/fetchers";
 import Link from "next/link";
 import { motion, useMotionValue, useTransform } from "framer-motion";
 import {
-  ArrowUpRight, Upload, CircleDollarSign,
+  ArrowUpRight,
+  Upload,
+  Sparkles,
+  Trash,
+  Pencil,
+  CircleDollarSign,
   ShieldCheck,
   Lightbulb,
 } from "lucide-react";
