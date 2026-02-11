@@ -6,7 +6,7 @@ import { supabase } from "@/lib/supabaseClient";
 import useSWR from "swr";
 import { getExpenses, getSmartSummary } from "@/lib/fetchers";
 import Link from "next/link";
-import { motion, useMotionValue, useTransform } from "framer-motion";
+import { motion, AnimatePresence, useMotionValue, useTransform } from "framer-motion";
 import {
   ArrowUpRight,
   Upload,
@@ -16,6 +16,9 @@ import {
   CircleDollarSign,
   ShieldCheck,
   Lightbulb,
+  ChevronDown,
+  ChevronUp,
+  MessageSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Bar } from "react-chartjs-2";
@@ -31,6 +34,29 @@ import ReactMarkdown from "react-markdown";
 import LoaderSpinner from "@/components/ui/LoaderSpinner";
 
 ChartJS.register(BarElement, CategoryScale, LinearScale, Tooltip, Legend);
+
+/* ----------------------
+   Category Config for Items
+   ---------------------- */
+import {
+  Utensils,
+  Car,
+  ShoppingBag,
+  Receipt,
+  HeartPulse,
+  Plane,
+  MoreHorizontal
+} from "lucide-react";
+
+const categoryIcons = {
+  Food: { icon: Utensils, color: "bg-orange-500/20 text-orange-500" },
+  Transport: { icon: Car, color: "bg-blue-500/20 text-blue-500" },
+  Shopping: { icon: ShoppingBag, color: "bg-pink-500/20 text-pink-500" },
+  Bills: { icon: Receipt, color: "bg-green-500/20 text-green-500" },
+  Health: { icon: HeartPulse, color: "bg-red-500/20 text-red-500" },
+  Travel: { icon: Plane, color: "bg-purple-500/20 text-purple-500" },
+  Other: { icon: MoreHorizontal, color: "bg-gray-500/20 text-gray-500" },
+};
 
 /* ----------------------
    Helper: smooth number animation (no extra deps)
@@ -93,6 +119,30 @@ export default function Dashboard() {
   const [loadingSummaryManually, setLoadingSummaryManually] = useState(false);
   const [smartSummary, setSmartSummary] = useState(null);
   const [summaryUpdatedAt, setSummaryUpdatedAt] = useState(null);
+  const [expandedId, setExpandedId] = useState(null);
+  const [chatInputs, setChatInputs] = useState({});
+  const [chatResponses, setChatResponses] = useState({});
+  const [isChatting, setIsChatting] = useState({});
+
+  const handleReceiptChat = async (txId, receiptData) => {
+    const message = chatInputs[txId];
+    if (!message) return;
+
+    setIsChatting(prev => ({ ...prev, [txId]: true }));
+    try {
+      const res = await fetch("/api/chat/receipt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message, receiptData }),
+      });
+      const data = await res.json();
+      setChatResponses(prev => ({ ...prev, [txId]: data.answer }));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsChatting(prev => ({ ...prev, [txId]: false }));
+    }
+  };
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data, error }) => {
@@ -639,52 +689,135 @@ export default function Dashboard() {
             {filtered.length === 0 ? (
               <p className="text-gray-500">No transactions found.</p>
             ) : (
-              <div className="divide-y divide-gray-100 dark:divide-gray-800">
-                {filtered.slice(0, 6).map((tx) => (
-                  <div
-                    key={tx.id}
-                    className="py-4 flex items-start justify-between gap-4"
-                  >
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-md bg-indigo-50 dark:bg-indigo-800/30 flex items-center justify-center">
-                          <span className="text-sm font-medium text-indigo-600">
-                            {(tx.category || "X").charAt(0)}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="font-medium">{tx.category}</p>
-                          <p className="text-sm text-gray-500">{tx.date}</p>
-                        </div>
-                      </div>
-                      {tx.description && (
-                        <p className="mt-2 text-sm text-gray-600 dark:text-gray-400 line-clamp-2">
-                          {tx.description}
-                        </p>
-                      )}
-                    </div>
+              <div className="space-y-4">
+                <AnimatePresence mode="popLayout">
+                  {filtered.slice(0, 6).map((tx) => {
+                    const config = categoryIcons[tx.category] || categoryIcons.Other;
+                    const Icon = config.icon;
+                    const isExpanded = expandedId === tx.id;
 
-                    <div className="text-right flex-shrink-0">
-                      <p className="font-semibold text-indigo-600">
-                        ${Number(tx.amount || 0).toFixed(2)}
-                      </p>
-                      <div className="flex gap-2 mt-3 justify-end">
-                        <button
-                          onClick={() => handleDelete(tx.id)}
-                          className="text-red-500 hover:text-red-700"
+                    return (
+                      <motion.div
+                        key={tx.id}
+                        layout
+                        className="group"
+                      >
+                        <div
+                          className={`py-4 flex items-start justify-between gap-4 cursor-pointer transition-all rounded-xl px-2 -mx-2 hover:bg-gray-50 dark:hover:bg-gray-800/40 ${isExpanded ? 'bg-gray-50 dark:bg-gray-800/40 shadow-sm ring-1 ring-indigo-500/10' : ''}`}
+                          onClick={() => setExpandedId(isExpanded ? null : tx.id)}
                         >
-                          <Trash className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => router.push(`/edit-expense/${tx.id}`)}
-                          className="text-indigo-500 hover:text-indigo-700"
-                        >
-                          <Pencil className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3">
+                              <div className={`w-10 h-10 rounded-xl ${config.color} flex items-center justify-center transition-transform group-hover:scale-110`}>
+                                <Icon className="w-5 h-5" />
+                              </div>
+                              <div>
+                                <p className="font-bold tracking-tight">{tx.category}</p>
+                                <p className="text-xs text-gray-400 font-medium">{tx.date}</p>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="text-right flex-shrink-0 flex items-center gap-4">
+                            <div>
+                              <p className="font-black text-indigo-600">
+                                ${Number(tx.amount || 0).toFixed(2)}
+                              </p>
+                              {tx.ocr_parsed?.items && (
+                                <p className="text-[10px] text-gray-400 font-bold uppercase flex items-center justify-end gap-1">
+                                  {tx.ocr_parsed.items.length} Items {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                              <button
+                                onClick={(e) => { e.stopPropagation(); handleDelete(tx.id); }}
+                                className="p-2 text-red-400 hover:text-red-600 transition-colors"
+                              >
+                                <Trash className="w-4 h-4" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+
+                        <AnimatePresence>
+                          {isExpanded && (
+                            <motion.div
+                              initial={{ height: 0, opacity: 0 }}
+                              animate={{ height: "auto", opacity: 1 }}
+                              exit={{ height: 0, opacity: 0 }}
+                              className="overflow-hidden bg-gray-50/50 dark:bg-gray-800/20 rounded-b-xl -mt-2 mb-2"
+                            >
+                              <div className="p-4 pt-6 space-y-4">
+                                {tx.description && (
+                                  <div className="p-3 bg-white dark:bg-gray-900 rounded-xl border border-gray-100 dark:border-gray-800">
+                                    <p className="text-[10px] text-gray-400 uppercase font-black mb-1">Analyst Note</p>
+                                    <p className="text-sm text-gray-600 dark:text-gray-300 italic">{tx.description}</p>
+                                  </div>
+                                )}
+
+                                {tx.ocr_parsed?.items?.length > 0 && (
+                                  <div className="space-y-2">
+                                    <p className="text-[10px] text-gray-400 uppercase font-black px-1">Detailed Breakdown</p>
+                                    <div className="grid grid-cols-1 gap-1.5">
+                                      {tx.ocr_parsed.items.map((item, i) => (
+                                        <div key={i} className="flex justify-between items-center p-2.5 bg-white dark:bg-gray-900 rounded-lg border border-gray-100 dark:border-gray-800">
+                                          <span className="text-xs font-semibold">{item.name}</span>
+                                          <span className="text-[10px] font-black text-gray-400">${Number(item.price).toFixed(2)}</span>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Receipt Chat Interface */}
+                                <div className="pt-2">
+                                  <div className="bg-indigo-500/5 dark:bg-indigo-500/10 rounded-xl p-3 border border-indigo-500/10">
+                                    <div className="flex items-center gap-2 mb-3">
+                                      <div className="p-1.5 bg-indigo-500 text-white rounded-lg">
+                                        <MessageSquare className="w-3 h-3" />
+                                      </div>
+                                      <h4 className="text-xs font-bold tracking-tight">Chat with Receipt</h4>
+                                    </div>
+
+                                    {chatResponses[tx.id] && (
+                                      <motion.div
+                                        initial={{ opacity: 0, y: 5 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="mb-3 p-3 bg-white dark:bg-gray-900 rounded-xl text-xs border border-indigo-500/10 shadow-sm"
+                                      >
+                                        <p className="text-gray-600 dark:text-gray-300 leading-relaxed font-medium">{chatResponses[tx.id]}</p>
+                                      </motion.div>
+                                    )}
+
+                                    <div className="relative flex gap-1.5">
+                                      <input
+                                        type="text"
+                                        placeholder="Ask a question..."
+                                        value={chatInputs[tx.id] || ""}
+                                        onChange={(e) => setChatInputs(prev => ({ ...prev, [tx.id]: e.target.value }))}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleReceiptChat(tx.id, tx.ocr_parsed)}
+                                        className="flex-1 bg-white dark:bg-gray-900 border-none rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-indigo-500 outline-none shadow-sm"
+                                      />
+                                      <Button
+                                        size="icon"
+                                        disabled={isChatting[tx.id] || !chatInputs[tx.id]}
+                                        onClick={() => handleReceiptChat(tx.id, tx.ocr_parsed)}
+                                        className="rounded-lg w-9 h-9 bg-indigo-500 hover:bg-indigo-600"
+                                      >
+                                        {isChatting[tx.id] ? <LoaderSpinner className="w-3 h-3 border-2" /> : <MessageSquare className="w-3 h-3" />}
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </motion.div>
+                    );
+                  })}
+                </AnimatePresence>
               </div>
             )}
           </motion.div>
