@@ -89,7 +89,18 @@ export async function POST(req) {
       );
     }
 
-    // Step 4: Update expense
+    // Step 4: Generate Embedding for Semantic Search
+    console.log("🪄 Generating semantic embedding...");
+    const embeddingInput = `Category: ${parsedJson.category}. Description: ${parsedJson.description}. Items: ${parsedJson.items?.map(i => i.name).join(", ")}`;
+
+    const embeddingRes = await openai.embeddings.create({
+      model: "text-embedding-3-small",
+      input: embeddingInput,
+    });
+
+    const embedding = embeddingRes.data[0].embedding;
+
+    // Step 5: Update expense
     console.log("🛠️ Updating expense in DB...");
     const { error: updateError } = await supabase
       .from("expenses")
@@ -97,7 +108,8 @@ export async function POST(req) {
         amount: parsedJson.amount,
         category: parsedJson.category,
         description: parsedJson.description || null,
-        ocr_parsed: parsedJson, // This now includes the 'items' array
+        ocr_parsed: parsedJson,
+        embedding: embedding, // Store the vector embedding
       })
       .eq("id", expenseId);
 
@@ -109,7 +121,7 @@ export async function POST(req) {
       );
     }
 
-    console.log("✅ Expense updated successfully!");
+    console.log("✅ Expense updated successfully with embedding!");
     return Response.json({ success: true });
   } catch (err) {
     console.error("💥 Unhandled error in full-process route:", err);

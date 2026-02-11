@@ -7,7 +7,11 @@ import useSWR from "swr";
 import { getExpenses, getSmartSummary } from "@/lib/fetchers";
 import Link from "next/link";
 import { motion, useMotionValue, useTransform } from "framer-motion";
-import { ArrowUpRight, Upload, Sparkles, Trash, Pencil } from "lucide-react";
+import {
+  ArrowUpRight, Upload, CircleDollarSign,
+  ShieldCheck,
+  Lightbulb,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Bar } from "react-chartjs-2";
 import {
@@ -127,6 +131,38 @@ export default function Dashboard() {
     setSummaryUpdatedAt(summaryData.updated_at ?? null);
   }, [summaryData]);
 
+  const [smartSwitch, setSmartSwitch] = useState(null);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchSwitch = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const res = await fetch("/api/smart-switch", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${sessionData.session.access_token}` },
+      });
+      const json = await res.json();
+      setSmartSwitch(json.suggestion);
+    };
+    fetchSwitch();
+  }, [user, transactionsData]);
+
+  const [budgetData, setBudgetData] = useState(null);
+
+  useEffect(() => {
+    if (!user) return;
+    const fetchBudget = async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const res = await fetch("/api/budget-shield", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${sessionData.session.access_token}` },
+      });
+      const json = await res.json();
+      setBudgetData(json);
+    };
+    fetchBudget();
+  }, [user, transactionsData]);
+
   useEffect(() => {
     const txs = transactionsData || [];
     const filteredTx = txs
@@ -136,11 +172,11 @@ export default function Dashboard() {
           (dateFilter ? tx.date === dateFilter : true) &&
           (search
             ? tx.description?.toLowerCase().includes(search.toLowerCase()) ||
-              tx.category?.toLowerCase().includes(search.toLowerCase())
+            tx.category?.toLowerCase().includes(search.toLowerCase())
             : true)
         );
       })
-      .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+      .sort((a, b) => new Date(b.date) - new Date(a.date));
     setFiltered(filteredTx);
   }, [transactionsData, categoryFilter, dateFilter, search]);
 
@@ -203,8 +239,7 @@ export default function Dashboard() {
         ),
         backgroundColor: categories.map(
           (_, i) =>
-            `rgba(${60 + ((i * 30) % 180)}, ${130 + ((i * 20) % 120)}, ${
-              200 - ((i * 10) % 100)
+            `rgba(${60 + ((i * 30) % 180)}, ${130 + ((i * 20) % 120)}, ${200 - ((i * 10) % 100)
             }, 0.85)`
         ),
         borderRadius: 10,
@@ -372,32 +407,57 @@ export default function Dashboard() {
           }}
           className="grid grid-cols-1 sm:grid-cols-3 gap-6 items-stretch"
         >
-          {/* Total Spending - prominent */}
+          {/* Budget Shield - The Hero Metric */}
           <motion.div
             variants={{
               hidden: { opacity: 0, y: 6 },
               visible: { opacity: 1, y: 0 },
             }}
             whileHover={{ y: -4, boxShadow: "0 20px 40px rgba(2,6,23,0.08)" }}
-            className="col-span-1 sm:col-span-1 bg-white dark:bg-gray-900/50 p-6 rounded-2xl shadow"
+            className={`col-span-1 sm:col-span-1 p-6 rounded-2xl shadow border-2 transition-colors ${budgetData?.isOverBudget
+              ? "bg-red-50/50 dark:bg-red-950/20 border-red-500/20"
+              : "bg-white dark:bg-gray-900/50 border-transparent"
+              }`}
           >
-            <div className="flex items-start justify-between">
+            <div className="flex items-start justify-between mb-4">
               <div>
-                <p className="text-sm text-gray-500">Total Spending</p>
-                <p className="text-3xl font-semibold mt-2">
+                <div className="flex items-center gap-2">
+                  <p className="text-sm text-gray-500">Budget Shield</p>
+                  {budgetData?.isOverBudget && (
+                    <span className="text-[10px] font-bold bg-red-500 text-white px-2 py-0.5 rounded-full animate-pulse">WARNED</span>
+                  )}
+                </div>
+                <p className="text-3xl font-black mt-2 tracking-tighter">
                   $
                   {animatedTotal.toLocaleString(undefined, {
                     maximumFractionDigits: 2,
                     minimumFractionDigits: 2,
                   })}
                 </p>
-                <p className="mt-2 text-xs text-gray-500">
-                  Across {filtered.length} transactions
+              </div>
+              <div className={`rounded-full p-3 ${budgetData?.isOverBudget ? "bg-red-500 text-white" : "bg-indigo-50 dark:bg-indigo-800/40 text-indigo-600"}`}>
+                <ShieldCheck className="w-5 h-5" />
+              </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="space-y-3">
+              <div className="h-2 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden">
+                <motion.div
+                  initial={{ width: 0 }}
+                  animate={{ width: `${Math.min(budgetData?.percentage || 0, 100)}%` }}
+                  className={`h-full ${budgetData?.percentage > 90 ? "bg-red-500" : budgetData?.percentage > 70 ? "bg-amber-500" : "bg-indigo-500"}`}
+                />
+              </div>
+              <div className="flex justify-between text-[11px] font-bold uppercase tracking-widest text-gray-400">
+                <span>Spent: {Math.round(budgetData?.percentage || 0)}%</span>
+                <span>Pro jected: ${Math.round(budgetData?.projection || 0)}</span>
+              </div>
+              {budgetData?.isOverBudget && (
+                <p className="text-[11px] text-red-500 font-bold italic leading-tight">
+                  ⚠️ At this pace, you'll exceed your ${budgetData?.budget} budget.
                 </p>
-              </div>
-              <div className="rounded-full bg-indigo-50 dark:bg-indigo-800/40 p-3">
-                <ArrowUpRight className="w-5 h-5 text-indigo-600" />
-              </div>
+              )}
             </div>
           </motion.div>
 
@@ -470,6 +530,33 @@ export default function Dashboard() {
             </div>
           </motion.div>
         </motion.div>
+
+        {/* Smart Switch Suggestion */}
+        {smartSwitch && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-indigo-600 rounded-3xl p-6 sm:p-8 text-white shadow-2xl relative overflow-hidden"
+          >
+            <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full -mr-20 -mt-20 blur-3xl" />
+            <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-6">
+              <div className="p-4 bg-white/20 rounded-2xl backdrop-blur-md">
+                <Lightbulb className="w-8 h-8 text-white" />
+              </div>
+              <div className="flex-1">
+                <div className="flex items-center gap-2 mb-2">
+                  <span className="text-[10px] font-black bg-white text-indigo-600 px-2 py-0.5 rounded-full uppercase tracking-tighter">Smart Switch Insight</span>
+                </div>
+                <p className="text-xl sm:text-2xl font-bold tracking-tight leading-snug">
+                  {smartSwitch}
+                </p>
+              </div>
+              <Button className="bg-white text-indigo-600 hover:bg-indigo-50 font-bold px-8 py-6 rounded-2xl shadow-lg">
+                Applied
+              </Button>
+            </div>
+          </motion.div>
+        )}
 
         {/* Big Chart - FULL WIDTH, prominent */}
         <motion.section

@@ -20,7 +20,8 @@ import {
   Plane,
   MoreHorizontal,
   TrendingDown,
-  Wallet
+  Wallet,
+  MessageSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LoaderSpinner from "@/components/ui/LoaderSpinner";
@@ -43,6 +44,10 @@ export default function TransactionsPage() {
   const [categoryFilter, setCategoryFilter] = useState("");
   const [expandedId, setExpandedId] = useState(null);
 
+  const [isSemantic, setIsSemantic] = useState(false);
+  const [semanticResults, setSemanticResults] = useState([]);
+
+  // Fetch Session
   useEffect(() => {
     supabase.auth.getSession().then(({ data, error }) => {
       if (error || !data.session?.user) return router.push("/sign-in");
@@ -50,6 +55,34 @@ export default function TransactionsPage() {
       setLoadingUser(false);
     });
   }, [router]);
+
+  // Semantic Search Effect (Debounced)
+  useEffect(() => {
+    if (!search || search.length < 3) {
+      setSemanticResults([]);
+      setIsSemantic(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session?.access_token) return;
+
+      setIsSemantic(true);
+      const res = await fetch("/api/search/semantic", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${sessionData.session.access_token}`,
+        },
+        body: JSON.stringify({ query: search }),
+      });
+      const data = await res.json();
+      if (data.results) setSemanticResults(data.results);
+    }, 600); // 600ms debounce
+
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const shouldFetch = !!user?.id;
   const {
@@ -66,17 +99,31 @@ export default function TransactionsPage() {
     mutate();
   };
 
-  const filtered = (transactionsData || [])
-    .filter((tx) => {
-      return (
-        (categoryFilter ? tx.category === categoryFilter : true) &&
-        (search
-          ? tx.description?.toLowerCase().includes(search.toLowerCase()) ||
-          tx.category?.toLowerCase().includes(search.toLowerCase())
-          : true)
-      );
-    })
-    .sort((a, b) => new Date(b.date) - new Date(a.date));
+  const [chatInputs, setChatInputs] = useState({});
+  const [chatResponses, setChatResponses] = useState({});
+  const [isChatting, setIsChatting] = useState({});
+
+  const handleReceiptChat = async (txId, receiptData) => {
+    const message = chatInputs[txId];
+    if (!message) return;
+
+    setIsChatting(prev => ({ ...prev, [txId]: true }));
+    try {
+      const res = await fetch("/api/chat/receipt", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ message, receiptData }),
+      });
+      const data = await res.json();
+      setChatResponses(prev => ({ ...prev, [txId]: data.answer }));
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsChatting(prev => ({ ...prev, [txId]: false }));
+    }
+  };
+
+  // Skip down to the isExpanded section in the render...
 
   const totalSpent = filtered.reduce((acc, tx) => acc + Number(tx.amount || 0), 0);
 
@@ -252,6 +299,47 @@ export default function TransactionsPage() {
                                 </div>
                               </div>
                             )}
+
+                            {/* Receipt Chat Interface */}
+                            <div className="pt-4 border-t dark:border-gray-800">
+                              <div className="bg-indigo-500/5 dark:bg-indigo-500/10 rounded-2xl p-4 sm:p-6 border border-indigo-500/10">
+                                <div className="flex items-center gap-2 mb-4">
+                                  <div className="p-2 bg-indigo-500 text-white rounded-lg">
+                                    <MessageSquare className="w-4 h-4" />
+                                  </div>
+                                  <h4 className="text-sm font-bold tracking-tight">Chat with this Receipt</h4>
+                                </div>
+
+                                {chatResponses[tx.id] && (
+                                  <motion.div
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    className="mb-4 p-4 bg-white dark:bg-gray-900 rounded-2xl text-sm border border-indigo-500/10 shadow-sm"
+                                  >
+                                    <p className="text-gray-600 dark:text-gray-300 leading-relaxed">{chatResponses[tx.id]}</p>
+                                  </motion.div>
+                                )}
+
+                                <div className="relative flex gap-2">
+                                  <input
+                                    type="text"
+                                    placeholder="Ask a question about these items..."
+                                    value={chatInputs[tx.id] || ""}
+                                    onChange={(e) => setChatInputs(prev => ({ ...prev, [tx.id]: e.target.value }))}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleReceiptChat(tx.id, tx.ocr_parsed)}
+                                    className="flex-1 bg-white dark:bg-gray-900 border-none rounded-xl px-4 py-3 text-sm focus:ring-2 focus:ring-indigo-500 outline-none shadow-sm"
+                                  />
+                                  <Button
+                                    size="icon"
+                                    disabled={isChatting[tx.id] || !chatInputs[tx.id]}
+                                    onClick={() => handleReceiptChat(tx.id, tx.ocr_parsed)}
+                                    className="rounded-xl w-12 h-12 bg-indigo-500 hover:bg-indigo-600"
+                                  >
+                                    {isChatting[tx.id] ? <LoaderSpinner className="w-4 h-4 border-2" /> : <MessageSquare className="w-4 h-4" />}
+                                  </Button>
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         </motion.div>
                       )}

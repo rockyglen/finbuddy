@@ -122,7 +122,7 @@ ${dataString}
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: "gpt-4-1106-preview",
+      model: "gpt-4o-mini",
       messages: [
         { role: "system", content: "You are a financial analyst." },
         { role: "user", content: prompt },
