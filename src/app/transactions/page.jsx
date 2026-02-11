@@ -5,10 +5,35 @@ import { supabase } from "@/lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import useSWR from "swr";
 import { getExpenses } from "@/lib/fetchers";
-import { motion } from "framer-motion";
-import { Trash, Pencil, Filter, Search } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  Trash,
+  Pencil,
+  Search,
+  ChevronDown,
+  ChevronUp,
+  Utensils,
+  Car,
+  ShoppingBag,
+  Receipt,
+  HeartPulse,
+  Plane,
+  MoreHorizontal,
+  TrendingDown,
+  Wallet
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import LoaderSpinner from "@/components/ui/LoaderSpinner";
+
+const categoryIcons = {
+  Food: { icon: Utensils, color: "bg-orange-500/20 text-orange-500" },
+  Transport: { icon: Car, color: "bg-blue-500/20 text-blue-500" },
+  Shopping: { icon: ShoppingBag, color: "bg-pink-500/20 text-pink-500" },
+  Bills: { icon: Receipt, color: "bg-green-500/20 text-green-500" },
+  Health: { icon: HeartPulse, color: "bg-red-500/20 text-red-500" },
+  Travel: { icon: Plane, color: "bg-purple-500/20 text-purple-500" },
+  Other: { icon: MoreHorizontal, color: "bg-gray-500/20 text-gray-500" },
+};
 
 export default function TransactionsPage() {
   const router = useRouter();
@@ -16,7 +41,7 @@ export default function TransactionsPage() {
   const [loadingUser, setLoadingUser] = useState(true);
   const [search, setSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState("");
-  const [dateFilter, setDateFilter] = useState("");
+  const [expandedId, setExpandedId] = useState(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data, error }) => {
@@ -36,140 +61,208 @@ export default function TransactionsPage() {
   );
 
   const handleDelete = async (id) => {
+    if (!confirm("Are you sure you want to delete this?")) return;
     await supabase.from("expenses").delete().eq("id", id);
-    mutate(); // Refresh the list
+    mutate();
   };
 
   const filtered = (transactionsData || [])
     .filter((tx) => {
       return (
         (categoryFilter ? tx.category === categoryFilter : true) &&
-        (dateFilter ? tx.date === dateFilter : true) &&
         (search
           ? tx.description?.toLowerCase().includes(search.toLowerCase()) ||
           tx.category?.toLowerCase().includes(search.toLowerCase())
           : true)
       );
     })
-    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+    .sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  const totalSpent = filtered.reduce((acc, tx) => acc + Number(tx.amount || 0), 0);
 
   if (loadingUser || loadingTransactions) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-indigo-50 to-white dark:from-gray-950 dark:to-gray-900">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-950">
         <LoaderSpinner />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen px-6 lg:px-12 py-10 bg-gradient-to-b from-indigo-50 via-white to-indigo-100 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -8 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8"
-      >
-        <h1 className="text-4xl font-bold tracking-tight">All Transactions</h1>
-        <Button
-          onClick={() => router.push("/add-expense")}
-          className="bg-gradient-to-r from-indigo-500 to-purple-500 text-white shadow hover:scale-105 transition"
-        >
-          + Add Transaction
-        </Button>
-      </motion.div>
+    <div className="min-h-screen px-6 lg:px-12 py-12 bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+      <div className="max-w-5xl mx-auto">
+        {/* Header Section */}
+        <div className="flex flex-col md:flex-row justify-between items-end mb-12 gap-8">
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+          >
+            <h1 className="text-5xl font-extrabold tracking-tighter mb-2">Transactions</h1>
+            <p className="text-gray-500 dark:text-gray-400 font-medium">Manage and monitor your financial flow</p>
+          </motion.div>
 
-      {/* Filters */}
-      <div className="flex flex-col md:flex-row gap-4 mb-8">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-3 text-gray-400 w-5 h-5" />
-          <input
-            type="text"
-            placeholder="Search transactions..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900"
-          />
-        </div>
-        <select
-          value={categoryFilter}
-          onChange={(e) => setCategoryFilter(e.target.value)}
-          className="px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900"
-        >
-          <option value="">All Categories</option>
-          {[...new Set(transactionsData?.map((tx) => tx.category))].map(
-            (cat) => (
-              <option key={cat} value={cat}>
-                {cat}
-              </option>
-            )
-          )}
-        </select>
-        <input
-          type="date"
-          value={dateFilter}
-          onChange={(e) => setDateFilter(e.target.value)}
-          className="px-4 py-3 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900"
-        />
-      </div>
-
-      {/* Transactions List */}
-      {filtered.length === 0 ? (
-        <p className="text-gray-500">No transactions found.</p>
-      ) : (
-        <div className="space-y-4">
-          {filtered.map((tx, index) => (
-            <motion.div
-              key={tx.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.05 }}
-              className="p-6 bg-white/70 dark:bg-gray-900/50 rounded-xl shadow hover:shadow-lg transition flex justify-between items-center"
-            >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="flex gap-4"
+          >
+            <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 p-4 rounded-2xl shadow-sm flex items-center gap-4">
+              <div className="p-3 bg-indigo-500/10 text-indigo-500 rounded-xl">
+                <Wallet className="w-6 h-6" />
+              </div>
               <div>
-                <p className="text-xl font-semibold">{tx.category}</p>
-                <p className="text-sm text-gray-500">{tx.date}</p>
-                {tx.description && (
-                  <p className="text-sm italic text-gray-600 dark:text-gray-400">
-                    {tx.description}
-                  </p>
-                )}
-                {tx.ocr_parsed?.items && tx.ocr_parsed.items.length > 0 && (
-                  <div className="mt-2 space-y-1">
-                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Items:</p>
-                    <ul className="text-xs text-gray-600 dark:text-gray-300">
-                      {tx.ocr_parsed.items.map((item, i) => (
-                        <li key={i} className="flex justify-between max-w-xs">
-                          <span>• {item.name}</span>
-                          {item.price && <span className="text-gray-400">${Number(item.price).toFixed(2)}</span>}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+                <p className="text-xs text-gray-500 uppercase font-bold tracking-widest">Total Filtered</p>
+                <p className="text-2xl font-black">${totalSpent.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
               </div>
-              <div className="text-right">
-                <p className="text-lg font-bold text-indigo-500">
-                  ${Number(tx.amount || 0).toFixed(2)}
-                </p>
-                <div className="flex gap-3 justify-end mt-2">
-                  <button
-                    onClick={() => handleDelete(tx.id)}
-                    className="text-red-500 hover:text-red-700"
-                  >
-                    <Trash className="w-5 h-5" />
-                  </button>
-                  <button
-                    onClick={() => router.push(`/edit-expense/${tx.id}`)}
-                    className="text-indigo-500 hover:text-indigo-700"
-                  >
-                    <Pencil className="w-5 h-5" />
-                  </button>
-                </div>
+            </div>
+
+            <div className="bg-indigo-600 text-white p-4 rounded-2xl shadow-lg shadow-indigo-500/20 flex items-center gap-4">
+              <div className="p-3 bg-white/20 rounded-xl">
+                <TrendingDown className="w-6 h-6" />
               </div>
-            </motion.div>
-          ))}
+              <div>
+                <p className="text-xs text-white/70 uppercase font-bold tracking-widest">Transactions</p>
+                <p className="text-2xl font-black">{filtered.length}</p>
+              </div>
+            </div>
+          </motion.div>
         </div>
-      )}
+
+        {/* Controls */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+          <div className="relative col-span-2">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              placeholder="Search by vendor or category..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-12 pr-4 py-4 rounded-2xl border-none bg-white dark:bg-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-500 transition-all outline-none"
+            />
+          </div>
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            className="px-4 py-4 rounded-2xl border-none bg-white dark:bg-gray-900 shadow-sm focus:ring-2 focus:ring-indigo-500 transition-all outline-none text-gray-500"
+          >
+            <option value="">Status: All Categories</option>
+            {Object.keys(categoryIcons).map((cat) => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Transactions list */}
+        <div className="space-y-4">
+          <AnimatePresence mode="popLayout">
+            {filtered.length === 0 ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="text-center py-20 bg-white/50 dark:bg-gray-900/50 rounded-3xl border-2 border-dashed border-gray-200 dark:border-gray-800"
+              >
+                <p className="text-gray-400 font-medium italic">Empty space. Time to save some money?</p>
+              </motion.div>
+            ) : (
+              filtered.map((tx, idx) => {
+                const config = categoryIcons[tx.category] || categoryIcons.Other;
+                const Icon = config.icon;
+                const isExpanded = expandedId === tx.id;
+
+                return (
+                  <motion.div
+                    key={tx.id}
+                    layout
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.95 }}
+                    transition={{ delay: idx * 0.03 }}
+                    className={`group bg-white dark:bg-gray-900 rounded-3xl p-1 shadow-sm hover:shadow-xl transition-all border border-transparent hover:border-indigo-500/20 ${isExpanded ? 'ring-2 ring-indigo-500/10' : ''}`}
+                  >
+                    <div className="p-4 sm:p-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : tx.id)}>
+                      <div className="flex items-center gap-5">
+                        <div className={`p-4 rounded-2xl ${config.color} transition-transform group-hover:scale-110`}>
+                          <Icon className="w-6 h-6" />
+                        </div>
+                        <div>
+                          <p className="text-lg font-bold tracking-tight">{tx.category}</p>
+                          <p className="text-sm text-gray-400 font-medium">{new Date(tx.date).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-6 self-end sm:self-center">
+                        <div className="text-right">
+                          <p className="text-2xl font-black text-indigo-500 tracking-tighter">
+                            ${Number(tx.amount || 0).toFixed(2)}
+                          </p>
+                          {tx.ocr_parsed?.items && (
+                            <div className="flex items-center justify-end gap-1 text-xs text-gray-400 font-bold uppercase transition-colors group-hover:text-indigo-400">
+                              {tx.ocr_parsed.items.length} Items {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="secondary"
+                            size="icon"
+                            onClick={(e) => { e.stopPropagation(); router.push(`/edit-expense/${tx.id}`); }}
+                            className="rounded-xl w-10 h-10 hover:bg-indigo-500 hover:text-white transition-colors"
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="secondary"
+                            size="icon"
+                            onClick={(e) => { e.stopPropagation(); handleDelete(tx.id); }}
+                            className="rounded-xl w-10 h-10 hover:bg-red-500 hover:text-white transition-colors"
+                          >
+                            <Trash className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <AnimatePresence>
+                      {isExpanded && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: "auto", opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="overflow-hidden border-t dark:border-gray-800 mx-6"
+                        >
+                          <div className="py-6 space-y-4">
+                            {tx.description && (
+                              <div className="p-4 bg-gray-50 dark:bg-gray-800/50 rounded-2xl border border-gray-100 dark:border-gray-800">
+                                <p className="text-xs text-gray-400 uppercase font-black mb-1">Analyst Note</p>
+                                <p className="text-sm text-gray-600 dark:text-gray-300 italic">{tx.description}</p>
+                              </div>
+                            )}
+
+                            {tx.ocr_parsed?.items?.length > 0 && (
+                              <div className="space-y-3">
+                                <p className="text-xs text-gray-400 uppercase font-black px-1">Detailed Breakdown</p>
+                                <div className="grid grid-cols-1 gap-2">
+                                  {tx.ocr_parsed.items.map((item, i) => (
+                                    <div key={i} className="flex justify-between items-center p-3 bg-white dark:bg-gray-800 rounded-xl border border-gray-100 dark:border-gray-700">
+                                      <span className="text-sm font-semibold">{item.name}</span>
+                                      <span className="text-xs font-black text-gray-400">${Number(item.price).toFixed(2)}</span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </motion.div>
+                );
+              })
+            )}
+          </AnimatePresence>
+        </div>
+      </div>
     </div>
   );
 }
