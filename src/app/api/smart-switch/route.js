@@ -20,31 +20,43 @@ export async function POST(req) {
     try {
         const { data: { user } } = await supabase.auth.getUser();
 
-        // 1. Fetch recent transactions with itemized data
+        // 1. Fetch ALL recent transactions
         const { data: expenses } = await supabase
             .from("expenses")
-            .select("ocr_parsed")
+            .select("category, description, amount, ocr_parsed")
             .eq("user_id", user.id)
-            .not("ocr_parsed", "is", null);
+            .order("date", { ascending: false })
+            .limit(50);
 
-        const allItems = expenses.flatMap(e => e.ocr_parsed?.items || []);
+        const dataForAI = expenses.map(e => ({
+            category: e.category,
+            description: e.description,
+            amount: e.amount,
+            items: e.ocr_parsed?.items || []
+        }));
 
-        if (allItems.length < 3) {
-            return Response.json({ suggestion: "Scan more receipts to unlock bulk-saving insights!" });
+        if (dataForAI.length < 3) {
+            return Response.json({ suggestion: "Add more transactions to unlock AI-powered Smart Switch insights!" });
         }
 
-        // 2. Ask GPT to find recurring items and suggest bulk-buys
+        // 2. Ask GPT to find recurring patterns (items or manual bills/subs)
         const systemPrompt = `
-You are a Frugal Living Specialist. Analyze the provided list of individual items purchased by a user.
-Identify items they buy frequently (e.g., Water, Coffee, Detergent, Snacks).
-Provide ONE high-impact "Smart Switch" suggestion.
+You are a Financial Optimization Expert. Analyze the provided list of expenses.
+Some have granular line-items (receipts), others only have descriptions/categories (manual).
+
+Identify high-impact savings opportunities:
+1. Recurring items in receipts (e.g., buying the same coffee/snacks daily).
+2. Recurring manual expenses (e.g., subscriptions, regular bills).
+
+Provide ONE specific "Smart Switch" suggestion. 
 
 FORMAT:
-Switch [Item Name] for [Bulk/Smarter Alternative] from [Vendor like Amazon/Costco/Walmart].
-This would save you approximately $[Amount] over a year.
+[Switch/Optimize] [Item/Service] for [Smarter Alternative/Bulk/Annual Plan]. 
+Rationale: [Brief explanation]. 
+Estimated savings: $[Amount] per [Year/Month].
 
-LIST OF ITEMS:
-${JSON.stringify(allItems)}
+USER DATA:
+${JSON.stringify(dataForAI)}
 `;
 
         const response = await openai.chat.completions.create({

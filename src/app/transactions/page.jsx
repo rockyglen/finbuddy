@@ -116,6 +116,7 @@ export default function TransactionsPage() {
       });
       const data = await res.json();
       setChatResponses(prev => ({ ...prev, [txId]: data.answer }));
+      setChatInputs(prev => ({ ...prev, [txId]: "" })); // Clear input
     } catch (err) {
       console.error(err);
     } finally {
