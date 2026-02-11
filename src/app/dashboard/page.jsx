@@ -675,7 +675,9 @@ export default function Dashboard() {
               <div className="text-sm text-gray-500">
                 Updated:{" "}
                 {summaryUpdatedAt
-                  ? new Date(summaryUpdatedAt).toLocaleString()
+                  ? new Date(summaryUpdatedAt).toLocaleString("en-US", {
+                    timeZone: "America/New_York",
+                  })
                   : "—"}
               </div>
             </div>
